@@ -1221,3 +1221,385 @@ Map each T-Rex stream to one TEID.
 Store per-stream throughput and loss in InfluxDB.
 Use those per-slice metrics as the main input for QoS enforcement.
 ```
+
+
+# Experiments
+
+# Experimental Battery — Agentic B5G QoS Enforcement
+
+This document defines the experimental battery designed to evaluate an LLM-based
+agentic controller acting as a QoS enforcement entity in a B5G user plane.
+
+The goal is to produce a high-impact paper. Every experiment in this battery is
+designed to support a specific scientific claim and to withstand peer review at
+top-tier venues (INFOCOM, SIGCOMM, ToN, JSAC, CoNEXT).
+
+## 1. Thesis statement
+
+> LLM-based agents can operate B5G QoS policies on a real eBPF/XDP user plane
+> with explainability and zero-shot generalization that classical controllers
+> cannot achieve, at an acceptable operational overhead.
+
+Every experiment in this battery exists to support, refute, or quantify one
+clause of this statement.
+
+## 2. Required preconditions
+
+Before any experiment in this battery is executed, the following items must be
+in place. These are not experiments — they are prerequisites for valid results.
+
+### 2.1. Functional preconditions
+
+- [x] Two-host topology with Mellanox ConnectX-5 on N3 and N6
+- [x] eUPF running with XDP attached on both interfaces
+- [x] pfcpsim establishing PFCP association
+- [x] pfcpsim creating multiple sessions with distinct TEIDs
+- [x] Uplink GTP-U decapsulation validated end-to-end
+- [x] InfluxDB collecting global eUPF metrics
+- [x] InfluxDB collecting TEID-scoped state
+- [x] MTU 9000 end-to-end on data plane interfaces
+- [ ] **Downlink encapsulation working** (pfcpsim FAR patch required)
+- [ ] **XDP native mode validated** (currently generic)
+- [ ] TRex installed and validated with one stream per TEID
+- [ ] TRex per-stream statistics flowing to InfluxDB
+- [ ] Baseline threshold-based controller implemented
+- [ ] Agentic controller implemented with bounded action set
+
+### 2.2. Methodological preconditions
+
+- [ ] Each experiment has a written hypothesis
+- [ ] Each experiment defines primary and secondary metrics
+- [ ] Sample size calculated for statistical significance (target n≥10 runs)
+- [ ] Confidence intervals at 95%
+- [ ] Cool-down period between runs documented
+- [ ] Reproducibility: every experiment scriptable end-to-end
+
+## 3. Independent variables
+
+Variables manipulated across experiments.
+
+### 3.1. Traffic mix
+
+| Profile | Slices | Inner traffic shape |
+|---|---|---|
+| `single_slice` | 1 (TEID 1) | CBR |
+| `multi_slice_homogeneous` | 3 (TEIDs 1, 11, 21) | CBR each |
+| `multi_slice_heterogeneous` | 3 | eMBB-like (high BW), URLLC-like (low BW low latency), mIoT-like (sparse bursts) |
+| `realistic` | 3+ | derived from PCAP profiles via niloysh/5g-traffic-generator |
+| `adversarial` | 3+ | bursty, spoofed QoS reports, traffic shape designed to confuse the controller |
+
+### 3.2. Offered load
+
+- `subcritical`  — 50% of measured eUPF capacity
+- `critical`     — 100% of measured eUPF capacity
+- `overload`     — 150% of measured eUPF capacity
+
+Capacity must be measured in Experiment 1 before any other run.
+
+### 3.3. Controller
+
+- `static`       — fixed QER, no runtime changes
+- `threshold`    — rule-based controller (e.g. if loss > 1% on slice X for 3s, reduce MBR by 50%)
+- `agentic`      — LLM-based controller with bounded action set
+- `drl_baseline` — optional DRL baseline (PPO or DQN) trained offline
+- `oracle`       — controller with perfect knowledge of future load (upper bound)
+
+### 3.4. XDP attach mode
+
+- `generic` — for functional validation only
+- `native`  — for all final results
+
+## 4. Dependent variables (metrics)
+
+### 4.1. System-level metrics
+
+- Per-slice goodput (Mbps)
+- Per-slice loss rate (%)
+- Per-slice latency p50, p95, p99 (μs)
+- Per-slice jitter (μs)
+- SLA violation rate (% time outside target band)
+- Aggregate eUPF throughput (Mpps and Gbps)
+- XDP drops, redirects (global counters)
+
+### 4.2. Controller-level metrics
+
+- Time-to-detect (s) — violation event to detection
+- Time-to-enforce (s) — detection to applied rule
+- Action correctness rate (%) — actions that improved vs. degraded the metric
+- Stability (variance of MBR applied over time, lower is better)
+- Decision frequency (actions per minute)
+
+### 4.3. Agent-specific metrics
+
+- Decision latency (ms)
+- Token cost per decision (tokens in + tokens out)
+- Operational cost (USD per hour of operation)
+- Explanation quality (0–5 rubric, 3 evaluators, n≥100 decisions)
+- Hallucination rate (% actions referencing non-existent slices/IDs)
+
+## 5. Battery of experiments
+
+### Exp 1 — System characterization (validation, not contribution)
+
+**Hypothesis:** the eUPF testbed has a measurable maximum throughput and a
+stable baseline latency; performance is reproducible across runs.
+
+**Setup:** static controller, single slice, CBR ramp from 100 Mbps to line rate.
+
+**Metrics:** max sustained Mpps, max Gbps, latency at 50% load, packet drops at
+saturation point.
+
+**Outputs:** capacity table used to calibrate `subcritical` / `critical` /
+`overload` levels for all subsequent experiments.
+
+**Reporting:** appears in the Implementation section, not in Results.
+
+### Exp 2 — Static enforcement under load (motivation experiment)
+
+**Hypothesis:** without runtime control, fixed QER cannot maintain SLA across
+heterogeneous slices when offered load varies.
+
+**Setup:** `multi_slice_heterogeneous`, controller `static`, load swept from
+subcritical to overload over 10 minutes.
+
+**Metrics:** per-slice goodput, SLA violation rate, loss.
+
+**Expected result:** SLA violations grow non-linearly with load. URLLC-like
+slice violates first.
+
+**Role in paper:** establishes the *need* for dynamic control. Sets the bar
+the agent must beat.
+
+### Exp 3 — Threshold vs. agent head-to-head (main experiment)
+
+**Hypothesis:** the agent achieves SLA violation rate ≤ threshold controller
+under identical conditions, while providing additional properties (Exp 5, 6).
+
+**Setup:** identical traffic and load profile, only the controller changes.
+Run each controller n≥10 times. Randomize run order to avoid drift bias.
+
+**Metrics:** all primary metrics from §4.1 and §4.2.
+
+**Statistical test:** paired comparison (same load profile per run pair),
+Wilcoxon signed-rank for non-normal distributions.
+
+**Expected result:** parity or modest improvement. The headline is *not* "agent
+wins"; it is "agent matches and offers properties classical control cannot."
+
+### Exp 4 — Zero-shot generalization
+
+**Hypothesis:** when faced with traffic profiles not seen during configuration,
+the agent degrades less than the threshold controller.
+
+**Setup:**
+1. Configure threshold controller for `multi_slice_heterogeneous` profile.
+   Tune until it performs well.
+2. Switch to a *new* profile not used during tuning: different number of
+   slices, different bandwidth ratios, anomalies from `gtpu_anomaly_injector`.
+3. Run agent on the same new profile with no reconfiguration.
+
+**Metrics:** SLA violation rate, time-to-enforce, action correctness rate.
+
+**Expected result:** threshold degrades sharply, agent degrades gracefully.
+This is the experiment that justifies the LLM choice.
+
+### Exp 5 — Natural language policy enforcement (killer experiment)
+
+**Hypothesis:** the agent can correctly enforce policies expressed in natural
+language that a threshold controller cannot represent without redesign.
+
+**Setup:** operator provides a policy in plain English, e.g.:
+
+> "Between 18:00 and 23:00, prioritize URLLC traffic even if eMBB throughput
+> is reduced by up to 30%."
+
+> "When anomalous bursts are detected, freeze QoS changes for 60 seconds to
+> avoid oscillation."
+
+> "If any slice reports loss above 5% for more than 10 seconds, throttle the
+> noisiest slice on the same node."
+
+The agent must operationalize each policy. The threshold controller cannot
+represent these without a code change.
+
+**Metrics:**
+- Policy compliance rate (% time policy is honored)
+- Time to first action after policy is loaded
+- Action correctness rate
+
+**Expected result:** the agent honors all three policies; the threshold
+controller is shown as not-applicable. This is the qualitatively-novel
+contribution.
+
+### Exp 6 — Explainability and auditability
+
+**Hypothesis:** the agent produces decision rationales that are internally
+consistent, aligned with the action taken, and useful for human operators.
+
+**Setup:** for each decision in Exp 3 and Exp 5, capture the rationale.
+Sample n≥100 decisions stratified across actions.
+
+**Evaluation rubric (per decision, scored 0–5 by 3 independent evaluators):**
+- Internal consistency — rationale does not contradict itself
+- Alignment — rationale matches the action taken
+- Operator utility — would help a telco engineer audit the system
+
+**Inter-rater agreement:** Cohen's κ.
+
+**Expected result:** mean ≥ 4.0 on all axes, κ ≥ 0.6.
+
+**Role in paper:** this is something *no* DRL baseline can produce. It is a
+direct differentiator and a strong selling point for telco adoption.
+
+### Exp 7 — Adversarial robustness
+
+**Hypothesis:** the agent maintains SLA under traffic patterns designed to
+mislead the controller (false bursts, oscillating loads, slices reporting
+inconsistent telemetry).
+
+**Setup:** `adversarial` traffic mix. Bursts via `gtpu_anomaly_injector`.
+Optional: telemetry tampering by injecting false metrics into InfluxDB.
+
+**Metrics:** SLA violation rate, oscillation count (rule changes per minute),
+false positive rate (actions taken on benign anomalies).
+
+**Expected result:** agent is more robust than threshold but degrades under
+sufficiently aggressive adversarial conditions. **Honest reporting of failure
+modes is a strength**, not a weakness.
+
+### Exp 8 — Operational cost analysis
+
+**Hypothesis:** the agentic approach has a quantifiable cost overhead, but
+the cost-per-SLA-saved is favorable for high-value slices.
+
+**Setup:** measure across Exp 3, 4, 5:
+- Tokens per decision (input + output)
+- Wall-clock latency per decision
+- USD cost per hour of operation (use current API pricing)
+- SLA-events prevented vs. controller cost
+
+**Metrics:** USD/hour, USD/SLA-violation-prevented, decision latency
+distribution.
+
+**Expected result:** higher absolute cost than threshold, but cost-per-SLA-
+saved competitive for high-priority slices.
+
+**Role in paper:** demonstrates engineering maturity. Reviewers will ask;
+answering up-front signals rigor.
+
+### Exp 9 (optional) — DRL baseline comparison
+
+**Hypothesis:** the agent matches a DRL baseline on Exp 3 metrics while
+maintaining advantages in Exp 4, 5, 6.
+
+**Setup:** train a PPO or DQN on the same testbed using a simulator-derived
+reward (SLA penalty + action cost). Evaluate on the same scenarios as Exp 3.
+
+**Effort:** ~3 weeks. Adds significant strength to the paper if achievable.
+
+**Metrics:** same as Exp 3.
+
+**Reporting:** if DRL outperforms in raw metrics, report it honestly. The
+paper's argument shifts to "DRL wins on raw metrics, agent wins on
+generalization, explainability, and natural-language policy."
+
+## 6. Experimental protocol
+
+### 6.1. Per-run protocol
+
+```
+1. Reset eUPF state (restart container, clear BPF maps)
+2. Reset pfcpsim state (re-associate, recreate sessions)
+3. Reset InfluxDB run-window markers
+4. Verify all preconditions (script: deploy/validate_eupf.sh)
+5. Start collectors
+6. Wait 30s for steady state
+7. Start traffic profile
+8. Start controller under test
+9. Run for fixed duration T (suggested: 600s)
+10. Stop traffic
+11. Stop controller
+12. Export run data with run_id tag
+13. Cooldown 60s
+14. Repeat
+```
+
+### 6.2. Per-experiment protocol
+
+```
+1. Define hypothesis in writing
+2. Define primary and secondary metrics
+3. Compute required sample size for target effect detection
+4. Randomize run order across controllers (avoid drift bias)
+5. Execute n runs per condition
+6. Compute means, 95% CIs, statistical tests
+7. Document any anomalies, dropped runs, environmental factors
+```
+
+### 6.3. Reproducibility
+
+- Container images pinned by digest (not `:main` tag)
+- Seeds fixed for randomized traffic generation
+- All scripts under version control
+- Raw InfluxDB exports per run preserved
+- Hardware, kernel, firmware, driver versions logged per run
+
+## 7. Threats to validity (anticipated reviewer objections)
+
+| Threat | Mitigation |
+|---|---|
+| Generic XDP overhead biases results | Run all final experiments in native mode |
+| Single-host TRex limits load realism | Document max load, show experiments stay below limit |
+| pfcpsim is not a real SMF | Document scope, validate decap path against 3GPP TS 29.244 |
+| LLM responses are non-deterministic | Report variance, use temperature=0, log all prompts/responses |
+| Threshold controller is a strawman | Tune threshold controller carefully, document tuning effort |
+| Results depend on specific LLM | Run Exp 3 and 5 with at least 2 different LLMs |
+| Downlink not measured | Either patch pfcpsim, or scope paper to UL with explicit justification |
+
+## 8. Paper structure mapping
+
+| Section | Source experiments |
+|---|---|
+| Intro | motivated by Exp 2 |
+| System design | architecture (no exp) |
+| Implementation | Exp 1 (capacity table) |
+| Methodology | §3, §4, §6 |
+| Results — baseline | Exp 2, 3 |
+| Results — generalization | Exp 4 |
+| Results — natural language | Exp 5 |
+| Results — explainability | Exp 6 |
+| Results — robustness | Exp 7 |
+| Results — cost | Exp 8 |
+| Results — DRL comparison | Exp 9 (if executed) |
+| Discussion | threats from §7 |
+
+## 9. Recommended execution order
+
+1. Resolve preconditions in §2.1 (≈1 week)
+2. Exp 1 — capacity characterization (1 day)
+3. Exp 2 — motivation (2 days, n=10)
+4. Implement threshold controller (3 days)
+5. Implement agentic controller (1 week)
+6. Exp 3 — head-to-head (3 days, n=10 per controller)
+7. Exp 5 — natural language (3 days, n=10 per policy)
+8. Exp 4 — generalization (2 days, n=10)
+9. Exp 6 — explainability evaluation (1 week including evaluator scheduling)
+10. Exp 7 — adversarial (3 days)
+11. Exp 8 — cost analysis (1 day, derived from logs of prior exps)
+12. Exp 9 — DRL (optional, 3 weeks)
+
+Total without Exp 9: ≈6 weeks.
+Total with Exp 9:    ≈9 weeks.
+
+## 10. Out-of-scope (explicitly)
+
+- Multi-UPF / multi-AMF scenarios
+- Real RAN integration (gNB hardware)
+- Authentication and security planes
+- Mobility / handover
+- Charging and billing
+- Encryption / IPsec on N3
+- IPv6 user plane (IPv4 only in this work)
+
+These should be acknowledged in the paper's Limitations section as natural
+extensions for future work.

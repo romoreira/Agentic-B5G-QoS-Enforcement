@@ -2174,4 +2174,218 @@ curl -s http://127.0.0.1:8080/metrics | grep pfcp_sessions
 sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup | grep rules
 sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup | grep rules
 ```
+# Results Appendix, First Valid DPDK Slice Experiment
+
+This appendix summarizes the first validated BESS-UPF DPDK experiment with three simultaneous slices. It is intended to be appended to the main setup README.
+
+## Experiment Identification
+
+```text
+Experiment name: dpdk_latency_run001
+Date: 2026-04-30
+TRex profile: /opt/trex/v3.08/automation/exp2/exp2_latency_profile.py
+TRex mode: software latency mode
+Duration: 30 s
+TX port: 0
+RX port: 1
+UPF datapath: BESS-UPF DPDK with Mellanox mlx5 PMD
+```
+
+## Active Setup
+
+The experiment was executed with the DPDK UPF stack already running.
+
+```text
+bess          upf-bess:2.4.2-dev-mlx5
+pfcpiface     upf-pfcp:2.4.2-dev
+bess-routectl upf-bess:2.4.2-dev-mlx5
+```
+
+The PFCP control plane remained active through the control interface.
+
+```text
+pfcp_sessions{node_id="192.168.90.2"} 3
+```
+
+The BESS datapath was using DPDK PMD ports.
+
+```text
+Access/N3: enp7s0np0Fast, PMDPort, 25,000 Mbps, MAC 10:70:fd:c1:59:c4
+Core/N6:   enp8s0np0Fast, PMDPort, 25,000 Mbps, MAC 10:70:fd:c1:59:c5
+```
+
+## Slice Mapping
+
+The experiment used three slices represented by different PG IDs.
+
+```text
+Slice 1: PG ID 1
+Slice 2: PG ID 11
+Slice 3: PG ID 21
+```
+
+Each slice transmitted 3000 packets during the 30 s run.
+
+## TRex Aggregate Results
+
+The TRex run completed successfully.
+
+```text
+ok: true
+started_at: 2026-04-30T20:23:07.687946Z
+finished_at: 2026-04-30T20:23:38.836878Z
+```
+
+Aggregate TRex port counters were:
+
+```text
+Port 0 TX packets: 9000
+Port 0 TX bytes:   1,890,000
+
+Port 1 RX packets: 9003
+Port 1 RX bytes:   1,566,303
+
+Port 0 output errors: 0
+Port 1 input errors:  0
+```
+
+The three extra packets observed on port 1 are not part of the per-slice flow counters. The per-slice counters show exactly 9000 received data packets across the three PG IDs.
+
+## TRex Per-Slice Flow Results
+
+Per-slice flow statistics confirmed that all three slices were transmitted and received correctly.
+
+| PG ID | TX packets | RX packets | TX bytes | RX bytes | Packet loss |
+|---:|---:|---:|---:|---:|---:|
+| 1  | 3000 | 3000 | 630,000 | 522,000 | 0 |
+| 11 | 3000 | 3000 | 630,000 | 522,000 | 0 |
+| 21 | 3000 | 3000 | 630,000 | 522,000 | 0 |
+
+Total per-slice flow counters:
+
+```text
+Total TX packets: 9000
+Total RX packets: 9000
+Total TX bytes:   1,890,000
+Total RX bytes:   1,566,000
+Total loss:       0 packets
+```
+
+The byte difference between TX and RX is expected because the UPF decapsulates the GTP-U packets before forwarding them toward N6.
+
+## TRex Per-Slice Latency Results
+
+Latency was successfully measured per PG ID.
+
+| PG ID | Average latency | Minimum latency | Maximum latency | Jitter | Dropped | Out of order | Duplicates |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1  | 40.425 ms | 40.423 ms | 40.432 ms | 0 us   | 0 | 0 | 0 |
+| 11 | 40.587 ms | 40.422 ms | 42.385 ms | 124 us | 0 | 0 | 0 |
+| 21 | 40.437 ms | 40.422 ms | 40.462 ms | 8 us   | 0 | 0 | 0 |
+
+Raw latency values reported by TRex were in microseconds.
+
+```text
+PG ID 1
+average: 40425 us
+min:     40423 us
+max:     40432 us
+jitter:  0 us
+
+PG ID 11
+average: 40587 us
+min:     40422 us
+max:     42385 us
+jitter:  124 us
+
+PG ID 21
+average: 40437 us
+min:     40422 us
+max:     40462 us
+jitter:  8 us
+```
+
+No sequence-level errors were reported by TRex.
+
+```text
+dropped:       0
+out_of_order:  0
+dup:           0
+seq_too_high:  0
+seq_too_low:   0
+```
+
+## UPF Counter Deltas
+
+UPF snapshots were collected before and after the TRex run.
+
+### Prometheus UPF Metrics
+
+| Metric | Before | After | Delta |
+|---|---:|---:|---:|
+| upf_packets_count rx Access | 2,038,310 | 2,047,311 | 9,001 |
+| upf_packets_count tx Core   | 1,692,499 | 1,701,499 | 9,000 |
+| upf_bytes_count rx Access   | 673,591,852 | 675,445,938 | 1,854,086 |
+| upf_bytes_count tx Core     | 497,163,742 | 498,693,742 | 1,530,000 |
+| upf_dropped_count rx Access | 0 | 0 | 0 |
+| upf_dropped_count tx Core   | 0 | 0 | 0 |
+
+The Access RX packet delta contains one additional packet compared with the main datapath counters. The BESS module counters confirm that exactly 9000 packets traversed the validated GTP-U processing path.
+
+### BESS Module Deltas
+
+| BESS module path | Before | After | Delta |
+|---|---:|---:|---:|
+| pdrLookup to gtpuDecap | 2,038,299 | 2,047,299 | 9,000 |
+| gtpuDecap output | 2,038,299 | 2,047,299 | 9,000 |
+| farLookup to farMerge | 1,692,499 | 1,701,499 | 9,000 |
+| enp8s0np0Routes gate 0 | 1,692,499 | 1,701,499 | 9,000 |
+| enp8s0np0Fast Out/TX | 1,692,499 | 1,701,499 | 9,000 |
+
+Failure and drop paths remained at zero.
+
+```text
+pdrLookupFail:      0
+farLookupFail:      0
+enp8s0np0bad_route: 0
+enp7s0np0Fast dropped: 0
+enp8s0np0Fast dropped: 0
+```
+
+## Validated Datapath
+
+The following datapath was validated in this experiment.
+
+```text
+TRex port 0
+  -> UPF Access/N3, enp7s0np0Fast, DPDK PMDPort
+  -> pdrLookup
+  -> gtpuDecap
+  -> appQERLookup/sessionQERLookup
+  -> farLookup
+  -> farMerge/executeFAR
+  -> enp8s0np0Routes
+  -> enp8s0np0DstMAC1070FDC0EF81
+  -> UPF Core/N6, enp8s0np0Fast, DPDK PMDPort
+  -> TRex port 1
+```
+
+## Result Summary
+
+This run validates the complete DPDK datapath for three simultaneous slices.
+
+```text
+BESS-UPF DPDK forwarding: OK
+PFCP sessions: 3 active sessions
+Per-slice TX/RX counters: OK
+Per-slice latency: OK
+Packet loss by PG ID: 0
+Sequence errors: 0
+UPF datapath drops: 0
+Bad route packets: 0
+PDR lookup failures: 0
+FAR lookup failures: 0
+```
+
+The measured average latency remained around 40 ms for all three PG IDs. Since this latency measurement used TRex software mode, this value should be interpreted as the latency of the current software-instrumented measurement setup, not as the intrinsic latency of the Mellanox NICs or the physical links alone.
 

@@ -1407,3 +1407,771 @@ N6 route and neighbor must be explicitly installed because TRex uses DPDK.
 TRex latency works with --software in this decapsulation scenario.
 The observed latency is software instrumented end to end testbed latency, not Mellanox hardware latency.
 ```
+
+# Appendix, DPDK Migration for BESS UPF with Mellanox
+
+This appendix extends the previous AF_PACKET README with the additional steps required to run the BESS UPF datapath in DPDK mode with Mellanox ConnectX interfaces.
+
+The goal is to keep the known good AF_PACKET setup intact and add a separate DPDK path.
+
+## A1. Validated topology
+
+```text
+TRex control, enp9s0, 192.168.90.2
+UPF control,  enp9s0, 192.168.90.1
+
+TRex N3, enp7s0np0, 192.168.70.2, MAC 10:70:fd:c0:ef:80
+UPF N3,  enp7s0np0, 192.168.70.1, MAC 10:70:fd:c1:59:c4
+
+TRex N6, enp8s0np0, 192.168.80.2, MAC 10:70:fd:c0:ef:81
+UPF N6,  enp8s0np0, 192.168.80.1, MAC 10:70:fd:c1:59:c5
+```
+
+Validated UPF PCI mapping:
+
+```text
+N3,  0000:07:00.0, enp7s0np0, MAC 10:70:fd:c1:59:c4
+N6,  0000:08:00.0, enp8s0np0, MAC 10:70:fd:c1:59:c5
+CTL, 0000:09:00.0, enp9s0,    MAC 16:af:85:d9:77:71
+```
+
+## A2. DPDK interpretation
+
+With Mellanox `mlx5`, the NICs can remain bound to the kernel driver `mlx5_core`, while DPDK accesses them through Verbs/RDMA. Operationally, while BESS DPDK is using N3 and N6, treat those interfaces as datapath owned.
+
+```text
+Do not rely on ping over enp7s0np0 or enp8s0np0 while BESS DPDK is running.
+Do not rely on tcpdump on enp7s0np0 or enp8s0np0 for datapath validation.
+Do not rely on iperf3 on enp7s0np0 or enp8s0np0 while TRex or BESS DPDK owns the path.
+Keep PFCP and management on enp9s0.
+```
+
+The static N6 neighbor is still needed because `route_control.py` uses the Linux route and neighbor tables to program BESS routes.
+
+```bash
+sudo ip neigh replace 192.168.80.2 lladdr 10:70:fd:c0:ef:81 dev enp8s0np0 nud permanent
+sudo ip route replace 192.168.80.2/32 via 192.168.80.2 dev enp8s0np0 onlink
+```
+
+## A3. Prepare Mellanox userspace on the UPF host
+
+Run on the UPF host.
+
+```bash
+cd /tmp
+
+wget https://www.mellanox.com/downloads/ofed/MLNX_OFED-5.9-0.5.6.0/MLNX_OFED_LINUX-5.9-0.5.6.0-ubuntu22.04-x86_64.tgz
+
+tar xzf MLNX_OFED_LINUX-5.9-0.5.6.0-ubuntu22.04-x86_64.tgz
+
+cd MLNX_OFED_LINUX-5.9-0.5.6.0-ubuntu22.04-x86_64
+
+sudo ./mlnxofedinstall --user-space-only --without-fw-update
+sudo ldconfig
+```
+
+Load modules:
+
+```bash
+sudo modprobe ib_uverbs
+sudo modprobe rdma_ucm
+sudo modprobe mlx5_ib
+```
+
+Validate:
+
+```bash
+strings /lib/x86_64-linux-gnu/libmlx5.so.1 | grep MLX5_1.24
+ls -l /dev/infiniband
+ibv_devinfo
+```
+
+Expected:
+
+```text
+MLX5_1.24
+/dev/infiniband/rdma_cm
+/dev/infiniband/uverbs0
+/dev/infiniband/uverbs1
+/dev/infiniband/uverbs2
+hca_id: mlx5_0, PORT_ACTIVE
+hca_id: mlx5_1, PORT_ACTIVE
+hca_id: mlx5_2, PORT_ACTIVE
+```
+
+In the validated setup:
+
+```text
+mlx5_0, node_guid 1070:fd03:00c1:59c4, N3
+mlx5_1, node_guid 1070:fd03:00c1:59c5, N6
+mlx5_2, node_guid 16af:85ff:fed9:7771, control
+```
+
+## A4. Create a separate DPDK config
+
+Do not overwrite the AF_PACKET file.
+
+```bash
+cd ~/bess-upf/config
+cp ~/bess-upf/upf/conf/upf.jsonc ./upf-dpdk-local.jsonc
+```
+
+Patch the local DPDK configuration:
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+import re
+
+p = Path("upf-dpdk-local.jsonc")
+s = p.read_text()
+
+s = s.replace('"ifname": "ens803f2"', '"ifname": "enp7s0np0"')
+s = s.replace('"ifname": "ens803f3"', '"ifname": "enp8s0np0"')
+
+s = re.sub(r'"peers"\s*:\s*\[[^\]]*\]', '"peers": []', s)
+s = re.sub(r'"ue_ip_pool"\s*:\s*"10\.250\.0\.0/16"', '"ue_ip_pool": "10.250.0.0/24"', s)
+s = re.sub(r'"read_timeout"\s*:\s*[0-9]+', '"read_timeout": 25', s)
+
+s = re.sub(r'"n6_bps"\s*:\s*[0-9]+', '"n6_bps": 1000000000', s)
+s = re.sub(r'"n3_bps"\s*:\s*[0-9]+', '"n3_bps": 1000000000', s)
+s = re.sub(r'"n6_burst_bytes"\s*:\s*[0-9]+', '"n6_burst_bytes": 12500000', s)
+s = re.sub(r'"n3_burst_bytes"\s*:\s*[0-9]+', '"n3_burst_bytes": 12500000', s)
+
+p.write_text(s)
+PY
+```
+
+Validate:
+
+```bash
+grep -nE '"mode"|"ifname"|"peers"|"read_timeout"|"http_port"|"ue_ip_pool"|"n6_bps"|"n3_bps"|"n6_burst_bytes"|"n3_burst_bytes"' upf-dpdk-local.jsonc
+```
+
+Expected:
+
+```text
+"mode": "dpdk"
+"ifname": "enp7s0np0"
+"ifname": "enp8s0np0"
+"peers": []
+"http_port": "8080"
+"ue_ip_pool": "10.250.0.0/24"
+```
+
+## A5. Why the original image did not detect Mellanox DPDK ports
+
+The original `upf-bess:2.4.2-dev` image saw PCI and `/dev/infiniband`, but BESS reported:
+
+```text
+0 DPDK PMD ports have been recognized
+```
+
+The issue was not the host. The issue was the BESS plugin directory. The image had `librte_net_mlx5.so` under `/usr/local/lib/x86_64-linux-gnu`, but it was not symlinked into:
+
+```text
+/opt/bess/lib/dpdk-pmds
+```
+
+The Dockerfile keeps a narrow PMD set and does not automatically include vendor PMDs such as `mlx5`.
+
+## A6. Create a derived BESS image with mlx5 enabled
+
+Create this file in `~/bess-upf/config`.
+
+```bash
+cd ~/bess-upf/config
+
+cat > Dockerfile.bess-mlx5 <<'EOF_DOCKER'
+FROM upf-bess:2.4.2-dev
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    libibverbs1 \
+    ibverbs-providers \
+    librdmacm1 \
+    libmlx5-1 \
+    libnl-3-200 \
+    libnl-route-3-200 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN set -e; \
+    mkdir -p /opt/bess/lib/dpdk-pmds; \
+    for pat in librte_common_mlx5 librte_net_mlx5; do \
+      found=0; \
+      for f in /usr/local/lib/x86_64-linux-gnu/${pat}.so*; do \
+        if [ -f "$f" ]; then \
+          ln -sf "$f" /opt/bess/lib/dpdk-pmds/; \
+          found=1; \
+        fi; \
+      done; \
+      if [ "$found" -eq 0 ]; then \
+        echo "Missing ${pat}" >&2; \
+        exit 1; \
+      fi; \
+    done; \
+    ldconfig; \
+    echo "MLX5 PMDs enabled:"; \
+    ls -l /opt/bess/lib/dpdk-pmds | grep mlx5
+EOF_DOCKER
+```
+
+Build:
+
+```bash
+sudo docker build --network=host -f Dockerfile.bess-mlx5 -t upf-bess:2.4.2-dev-mlx5 .
+```
+
+Validate:
+
+```bash
+sudo docker run --rm upf-bess:2.4.2-dev-mlx5 bash -lc '
+find /opt/bess/lib/dpdk-pmds -iname "*mlx5*"
+ldconfig -p | grep -E "mlx5|ibverbs|rdmacm" || true
+'
+```
+
+Expected:
+
+```text
+/opt/bess/lib/dpdk-pmds/librte_common_mlx5.so
+/opt/bess/lib/dpdk-pmds/librte_net_mlx5.so
+libibverbs.so.1
+libmlx5.so.1
+```
+
+## A7. Create the DPDK compose file
+
+Create `docker-compose-dpdk.yml` in `~/bess-upf/config`.
+
+```bash
+cd ~/bess-upf/config
+
+cat > docker-compose-dpdk.yml <<'EOF_COMPOSE'
+services:
+  bess:
+    image: upf-bess:2.4.2-dev-mlx5
+    container_name: bess
+    network_mode: host
+    privileged: true
+    cap_add:
+      - IPC_LOCK
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_NICE
+      - SYS_RESOURCE
+    volumes:
+      - ./upf-dpdk-local.jsonc:/opt/bess/bessctl/conf/upf.jsonc
+      - /sys:/sys
+      - /sys/devices/system/node:/sys/devices/system/node
+      - /lib/modules:/lib/modules
+      - /dev/hugepages:/dev/hugepages
+      - /dev/infiniband:/dev/infiniband
+    command: >
+      -grpc-url=0.0.0.0:10514
+
+  pfcpiface:
+    image: upf-pfcp:2.4.2-dev
+    container_name: pfcpiface
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - bess
+    volumes:
+      - ./upf-dpdk-local.jsonc:/conf/upf.jsonc
+    command: >
+      -config /conf/upf.jsonc
+EOF_COMPOSE
+```
+
+Validate syntax:
+
+```bash
+sudo docker compose -f docker-compose-dpdk.yml config
+```
+
+## A8. Start DPDK BESS
+
+Stop previous containers:
+
+```bash
+cd ~/bess-upf/config
+sudo docker rm -f pfcpiface bess-routectl bess 2>/dev/null || true
+```
+
+Ensure hugepages:
+
+```bash
+sudo mkdir -p /dev/hugepages
+sudo mount -t hugetlbfs nodev /dev/hugepages 2>/dev/null || true
+sudo sysctl -w vm.nr_hugepages=1024
+grep -i Huge /proc/meminfo
+```
+
+Start only `bess` first:
+
+```bash
+sudo docker compose -f docker-compose-dpdk.yml up -d bess
+sleep 3
+sudo docker logs bess --tail 80
+```
+
+Expected BESS log:
+
+```text
+3 DPDK PMD ports have been recognized:
+DPDK port_id 0, mlx5_pci, MAC 10:70:fd:c1:59:c4
+DPDK port_id 1, mlx5_pci, MAC 10:70:fd:c1:59:c5
+DPDK port_id 2, mlx5_pci, MAC 16:af:85:d9:77:71
+Server listening on 0.0.0.0:10514
+```
+
+The control NIC can be detected by DPDK, but the UPF pipeline must use only N3 and N6.
+
+## A9. Load the UPF pipeline
+
+```bash
+sudo docker exec bess bash -lc 'cd /opt/bess/bessctl && ./bessctl run up4'
+```
+
+Warnings like these were observed and were not fatal:
+
+```text
+Mirror veth interface: enp7s0np0 misconfigured: veth interface enp7s0np0 does not exist
+Mirror veth interface: enp8s0np0 misconfigured: veth interface enp8s0np0 does not exist
+```
+
+Validate BESS ports:
+
+```bash
+sudo docker exec bess /opt/bess/bessctl/bessctl show port
+```
+
+Expected:
+
+```text
+enp7s0np0Fast, Driver PMDPort, MAC 10:70:fd:c1:59:c4, Speed 25,000Mbps, Link UP
+enp8s0np0Fast, Driver PMDPort, MAC 10:70:fd:c1:59:c5, Speed 25,000Mbps, Link UP
+```
+
+## A10. Start pfcpiface
+
+```bash
+cd ~/bess-upf/config
+sudo docker compose -f docker-compose-dpdk.yml up -d pfcpiface
+sudo docker logs pfcpiface --tail 40
+```
+
+Expected:
+
+```text
+Mode: dpdk
+AccessIface: enp7s0np0
+CoreIface: enp8s0np0
+Peers: []
+UEIPPool: 10.250.0.0/24
+listening for new PFCP connections on [::]:8805
+```
+
+## A11. Program the N6 route in BESS
+
+```bash
+sudo ip neigh replace 192.168.80.2 lladdr 10:70:fd:c0:ef:81 dev enp8s0np0 nud permanent
+sudo ip route replace 192.168.80.2/32 via 192.168.80.2 dev enp8s0np0 onlink
+```
+
+Run the route controller with the mlx5 enabled image:
+
+```bash
+sudo docker rm -f bess-routectl 2>/dev/null || true
+
+sudo docker run --name bess-routectl -td --restart unless-stopped \
+  --net host \
+  --pid container:bess \
+  --entrypoint python3 \
+  -v ~/bess-upf/upf/conf/route_control.py:/route_control.py \
+  upf-bess:2.4.2-dev-mlx5 \
+  /route_control.py -i enp7s0np0 enp8s0np0
+```
+
+Validate:
+
+```bash
+sudo docker logs bess-routectl --tail 20
+sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes
+```
+
+Expected:
+
+```text
+Route entry 192.168.80.2/32 added to enp8s0np0Routes
+0 -> enp8s0np0DstMAC1070FDC0EF81
+8191 -> enp8s0np0bad_route
+```
+
+In DPDK mode, the route module input was observed as:
+
+```text
+enp8s0np0Routes input gate 0 from executeFAR:1
+```
+
+## A12. Recreate PFCP sessions from TRex
+
+On the TRex host:
+
+```bash
+sudo docker rm -f pfcpsim 2>/dev/null || true
+
+sudo docker run --rm -d --network host \
+  --name pfcpsim \
+  pfcpsim:patched \
+  -p 12345 \
+  --interface enp9s0
+```
+
+Configure:
+
+```bash
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 service configure \
+  --n3-addr 192.168.70.1 \
+  --remote-peer-addr 192.168.90.1
+```
+
+Associate:
+
+```bash
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 service associate
+```
+
+Create sessions:
+
+```bash
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 session create \
+  --count 3 --baseID 1 \
+  --ue-pool 10.250.0.0/24 \
+  --gnb-addr 192.168.70.2 \
+  --app-filter "udp:any:any:allow:100"
+```
+
+Validate on the UPF host:
+
+```bash
+curl -s http://127.0.0.1:8080/metrics | grep pfcp_sessions
+sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup | grep rules
+sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup | grep rules
+```
+
+Expected:
+
+```text
+pfcp_sessions{node_id="192.168.90.2"} 3
+pdrLookup, 6 rules
+farLookup, 6 rules
+```
+
+## A13. Validate DPDK forwarding with TRex
+
+For forwarding and capacity, start TRex without software mode:
+
+```bash
+cd /opt/trex/v3.08
+sudo ./t-rex-64 -i --no-ofed-check -c 8
+```
+
+In the TRex console:
+
+```text
+service --port 1
+start -f /opt/trex/v3.08/automation/exp2/exp2_profile.py -p 0 -m 10mbps -d 10 --force
+stats
+```
+
+Validate on the UPF host:
+
+```bash
+sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup | grep 'rules\|packets'
+sudo docker exec bess /opt/bess/bessctl/bessctl show module gtpuDecap | grep packets
+sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup | grep packets
+sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes
+sudo docker exec bess /opt/bess/bessctl/bessctl show port | grep -A8 enp8s0np0Fast
+```
+
+Validated DPDK forwarding result:
+
+```text
+pdrLookup -> gtpuDecap, 30003 packets
+pdrLookupFail, 0 packets
+
+gtpuDecap, 30003 packets
+
+farLookup -> farMerge, 30003 packets
+farLookupFail, 0 packets
+
+enp8s0np0Routes gate 0, 30003 packets
+enp8s0np0bad_route, 0 packets
+
+enp8s0np0Fast Out/TX, 30003 packets
+enp8s0np0Fast dropped, 0
+```
+
+Validated TRex result:
+
+```text
+Port 0 opackets, 30003
+Port 1 ipackets, 30007
+drop_rate, 0 bps
+oerrors, 0
+ierrors, 0
+```
+
+This confirms BESS UPF forwarding in DPDK mode.
+
+## A14. Latency measurement in the DPDK setup
+
+Forwarding works without `--software`. However, latency by PG ID was only observed reliably when TRex was started with `--software`.
+
+Start TRex for latency:
+
+```bash
+cd /opt/trex/v3.08
+sudo ./t-rex-64 -i --software --no-ofed-check -c 8
+```
+
+In the TRex console:
+
+```text
+service --port 1
+start -f /opt/trex/v3.08/automation/exp2/exp2_latency_profile.py -p 0 -d 10 --force
+stats -l
+```
+
+Validated DPDK latency result with TRex software mode:
+
+```text
+PG ID 1,  TX 443, RX 439, Avg 40427 us, Jitter 1, Errors 0
+PG ID 11, TX 443, RX 439, Avg 40426 us, Jitter 3, Errors 0
+PG ID 21, TX 443, RX 439, Avg 40445 us, Jitter 0, Errors 0
+```
+
+Interpretation:
+
+```text
+Forwarding DPDK works without TRex --software.
+Latency by PG ID works with TRex --software.
+The measured latency remains near 40 ms, which strongly suggests that the value is dominated by software instrumentation or the environment, not by the Mellanox datapath alone.
+```
+
+## A15. DPDK experiment checklist
+
+Before each DPDK run, check:
+
+```bash
+sudo docker ps
+sudo docker logs bess --tail 30
+sudo docker logs pfcpiface --tail 30
+sudo docker logs bess-routectl --tail 30
+
+curl -s http://127.0.0.1:8080/metrics | grep pfcp_sessions
+
+sudo docker exec bess /opt/bess/bessctl/bessctl show port
+sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup | grep rules
+sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup | grep rules
+sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes
+```
+
+Expected:
+
+```text
+bess running
+pfcpiface running
+bess-routectl running
+pfcp_sessions{node_id="192.168.90.2"} 3
+enp7s0np0Fast, PMDPort, 25,000Mbps, Link UP
+enp8s0np0Fast, PMDPort, 25,000Mbps, Link UP
+pdrLookup, 6 rules
+farLookup, 6 rules
+enp8s0np0Routes gate 0 points to enp8s0np0DstMAC1070FDC0EF81
+```
+
+During forwarding runs, collect:
+
+```bash
+sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup
+sudo docker exec bess /opt/bess/bessctl/bessctl show module gtpuDecap
+sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup
+sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes
+sudo docker exec bess /opt/bess/bessctl/bessctl show port
+```
+
+From TRex:
+
+```text
+stats
+stats -s
+```
+
+For latency runs with software mode:
+
+```text
+stats -l
+```
+
+## A16. Troubleshooting
+
+### BESS sees 0 DPDK PMD ports
+
+Check:
+
+```bash
+sudo docker exec bess bash -lc '
+ls -l /dev/infiniband || true
+find /opt/bess/lib/dpdk-pmds -iname "*mlx5*"
+ldconfig -p | grep -E "mlx5|ibverbs|rdmacm" || true
+'
+```
+
+Fix:
+
+```text
+Use upf-bess:2.4.2-dev-mlx5.
+Ensure librte_common_mlx5 and librte_net_mlx5 are symlinked into /opt/bess/lib/dpdk-pmds.
+Ensure /dev/infiniband is mounted into the container.
+```
+
+### BESS detects the control interface as a DPDK port
+
+This was observed:
+
+```text
+port_id 2, MAC 16:af:85:d9:77:71
+```
+
+This is acceptable if the UPF pipeline uses only:
+
+```text
+enp7s0np0Fast
+enp8s0np0Fast
+```
+
+### N6 route does not get installed
+
+Reinstall the static neighbor and route:
+
+```bash
+sudo ip neigh replace 192.168.80.2 lladdr 10:70:fd:c0:ef:81 dev enp8s0np0 nud permanent
+sudo ip route replace 192.168.80.2/32 via 192.168.80.2 dev enp8s0np0 onlink
+sudo docker restart bess-routectl
+```
+
+Validate:
+
+```bash
+sudo docker logs bess-routectl --tail 20
+sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes
+```
+
+### Rules exist but no N6 output
+
+Check all stages:
+
+```bash
+sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup
+sudo docker exec bess /opt/bess/bessctl/bessctl show module gtpuDecap
+sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup
+sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes
+sudo docker exec bess /opt/bess/bessctl/bessctl show port | grep -A8 enp8s0np0Fast
+```
+
+Working path:
+
+```text
+pdrLookup gate 1 to gtpuDecap increases
+gtpuDecap increases
+farLookup gate 0 to farMerge increases
+farLookupFail remains 0
+enp8s0np0Routes gate 0 increases
+enp8s0np0bad_route remains 0
+enp8s0np0Fast Out/TX increases
+```
+
+### TRex receives packets but stats -l has RX pkts 0
+
+Forwarding is working, but latency correlation is not.
+
+Use TRex software mode for latency:
+
+```bash
+sudo ./t-rex-64 -i --software --no-ofed-check -c 8
+```
+
+Then:
+
+```text
+service --port 1
+start -f /opt/trex/v3.08/automation/exp2/exp2_latency_profile.py -p 0 -d 10 --force
+stats -l
+```
+
+## A17. Roll back to AF_PACKET
+
+If needed:
+
+```bash
+cd ~/bess-upf/config
+
+sudo docker rm -f pfcpiface bess-routectl bess 2>/dev/null || true
+
+sudo docker compose up -d
+
+sudo docker exec bess bash -lc 'cd /opt/bess/bessctl && ./bessctl run up4'
+
+sudo docker restart pfcpiface
+
+sudo ip neigh replace 192.168.80.2 lladdr 10:70:fd:c0:ef:81 dev enp8s0np0 nud permanent
+sudo ip route replace 192.168.80.2/32 via 192.168.80.2 dev enp8s0np0 onlink
+
+sudo docker run --name bess-routectl -td --restart unless-stopped \
+  --net host \
+  --pid container:bess \
+  --entrypoint python3 \
+  -v ~/bess-upf/upf/conf/route_control.py:/route_control.py \
+  upf-bess:2.4.2-dev \
+  /route_control.py -i enp7s0np0 enp8s0np0
+```
+
+Recreate PFCP sessions from TRex:
+
+```bash
+sudo docker rm -f pfcpsim 2>/dev/null || true
+
+sudo docker run --rm -d --network host \
+  --name pfcpsim \
+  pfcpsim:patched \
+  -p 12345 \
+  --interface enp9s0
+
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 service configure \
+  --n3-addr 192.168.70.1 \
+  --remote-peer-addr 192.168.90.1
+
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 service associate
+
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 session create \
+  --count 3 --baseID 1 \
+  --ue-pool 10.250.0.0/24 \
+  --gnb-addr 192.168.70.2 \
+  --app-filter "udp:any:any:allow:100"
+```
+
+Validate:
+
+```bash
+curl -s http://127.0.0.1:8080/metrics | grep pfcp_sessions
+sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup | grep rules
+sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup | grep rules
+```
+

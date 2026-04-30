@@ -1,58 +1,172 @@
-# BESS-UPF + TRex Setup Guide
+# BESS UPF and TRex Standalone Testbed
 
-End-to-end setup for a standalone BESS-UPF testbed with TRex as the GTP-U
-traffic generator. AF_PACKET mode (kernel) for initial validation; DPDK
-migration documented as Phase 5 for production performance.
+End to end setup guide for a two host BESS UPF testbed with TRex as GTP U traffic generator.
 
-Two-host topology, no 5G core required. PFCP control plane via pfcpsim.
+This guide documents the working setup validated in the lab.
 
----
+The final validated path is:
 
-## Topology
-
-```
-   trex host (GPN)                              upf host (UCSD)
-   ─────────────────                            ──────────────────
-   enp3s0   10.30.6.27/23     mgmt (SSH only)    enp3s0  10.30.6.x/23
-   enp7s0np0  192.168.70.2/24   ◀── N3 ──▶       enp7s0np0  192.168.70.1/24
-   enp8s0np0  192.168.80.2/24   ◀── N6 ──▶       enp8s0np0  192.168.80.1/24
-
-   - TRex stateless (DPDK, takes both Mellanox)
-   - pfcpsim (patched, runs in container)
-   - 3 PDU sessions: TEIDs 1, 11, 21
-   - UE IPs 10.250.0.1, 10.250.0.2, 10.250.0.3
-
-   - BESS-UPF (AF_PACKET on Mellanox, kernel)
-   - pfcpiface (Go agent, listens on 8805)
-   - Per-slice metrics via Prometheus on :8080
+```text
+TRex port 0, N3
+to UPF enp7s0np0
+to BESS UPF
+to PDR match
+to GTP U decapsulation
+to FAR processing
+to N6 route
+to UPF enp8s0np0
+to TRex port 1 RX
 ```
 
----
+Latency measurement was validated with TRex in software mode.
 
-## Phase 1 — Prepare the UPF host
+```text
+PG ID 1   RX packets observed, latency reported
+PG ID 11  RX packets observed, latency reported
+PG ID 21  RX packets observed, latency reported
+```
 
-Run on the **upf** host. Assumes Ubuntu 22.04.5, kernel 5.15.
+Important interpretation:
 
-### 1.1 Bring up Mellanox interfaces
+```text
+The latency reported by TRex in this setup is the end to end software instrumented latency of the current AF_PACKET BESS UPF testbed. It is not the intrinsic latency of the Mellanox NICs.
+```
+
+## 1. Topology
+
+```text
+TRex host                                      UPF host
+──────────────────────────────────             ──────────────────────────────────
+
+Management
+enp3s0, 10.30.6.23/23                          enp3s0, 10.30.6.199/23
+
+N3, GTP U traffic
+enp7s0np0, 192.168.70.2/24                     enp7s0np0, 192.168.70.1/24
+MAC 10:70:fd:c0:ef:80                          MAC 10:70:fd:c1:59:c4
+PCI 0000:07:00.0                               PCI 0000:07:00.0
+
+N6, decapsulated traffic
+enp8s0np0, 192.168.80.2/24                     enp8s0np0, 192.168.80.1/24
+MAC 10:70:fd:c0:ef:81                          MAC 10:70:fd:c1:59:c5
+PCI 0000:08:00.0                               PCI 0000:08:00.0
+
+PFCP control
+enp9s0, 192.168.90.2/24                        enp9s0, 192.168.90.1/24
+MAC 02:ec:6c:4e:73:dd                          MAC 16:af:85:d9:77:71
+```
+
+Roles:
+
+```text
+UPF host
+Runs BESS UPF in AF_PACKET mode.
+Runs pfcpiface.
+Runs bess route controller.
+
+TRex host
+Runs TRex.
+Runs pfcpsim.
+Generates GTP U traffic on N3.
+Receives decapsulated traffic on N6.
+Sends PFCP control traffic through enp9s0.
+```
+
+Validated UE and TEID mapping:
+
+```text
+TEID 1    UE 10.250.0.1
+TEID 11   UE 10.250.0.2
+TEID 21   UE 10.250.0.3
+```
+
+## 2. UPF host installation
+
+Run these steps on the UPF host.
+
+### 2.1 Install base packages
+
+```bash
+sudo apt update
+sudo apt install -y \
+  build-essential \
+  git \
+  make \
+  curl \
+  jq \
+  net-tools \
+  tcpdump \
+  python3-pip \
+  docker.io \
+  docker-compose-v2 \
+  docker-buildx
+```
+
+Enable Docker:
+
+```bash
+sudo systemctl enable --now docker
+sudo docker --version
+sudo docker buildx version
+```
+
+If `docker-buildx` is not available, search for it:
+
+```bash
+apt-cache search buildx
+```
+
+On Ubuntu packaged Docker, the package name can be:
+
+```bash
+sudo apt install -y docker-buildx
+```
+
+### 2.2 Configure UPF interfaces
 
 ```bash
 sudo ip link set enp7s0np0 up
 sudo ip link set enp8s0np0 up
+sudo ip link set enp9s0 up
+
+sudo ip addr flush dev enp7s0np0
+sudo ip addr flush dev enp8s0np0
+sudo ip addr flush dev enp9s0
 
 sudo ip addr add 192.168.70.1/24 dev enp7s0np0
 sudo ip addr add 192.168.80.1/24 dev enp8s0np0
+sudo ip addr add 192.168.90.1/24 dev enp9s0
 
 sudo ip link set enp7s0np0 mtu 1500
 sudo ip link set enp8s0np0 mtu 1500
+sudo ip link set enp9s0 mtu 1500
 
 ip -br addr show enp7s0np0
 ip -br addr show enp8s0np0
+ip -br addr show enp9s0
 ```
 
-Persist across reboots (optional but recommended):
+Validate Mellanox driver and PCI addresses:
 
 ```bash
-sudo tee /etc/netplan/60-mellanox.yaml > /dev/null <<EOF
+ethtool -i enp7s0np0
+ethtool -i enp8s0np0
+lspci -nn | grep -i -E 'mellanox|ethernet'
+```
+
+Expected for the validated setup:
+
+```text
+enp7s0np0 PCI 0000:07:00.0
+enp8s0np0 PCI 0000:08:00.0
+driver mlx5_core
+firmware 16.35.3006
+```
+
+### 2.3 Optional netplan persistence
+
+```bash
+sudo tee /etc/netplan/60-bess-upf.yaml > /dev/null <<'EOF'
 network:
   version: 2
   ethernets:
@@ -62,44 +176,15 @@ network:
     enp8s0np0:
       addresses: [192.168.80.1/24]
       mtu: 1500
+    enp9s0:
+      addresses: [192.168.90.1/24]
+      mtu: 1500
 EOF
+
 sudo netplan apply
 ```
 
-### 1.2 Install dependencies
-
-```bash
-sudo apt update
-sudo apt install -y \
-    build-essential \
-    git \
-    docker.io \
-    docker-compose-v2 \
-    make \
-    curl \
-    jq \
-    net-tools \
-    tcpdump
-
-sudo systemctl enable --now docker
-
-# add user to docker group (re-login required)
-sudo usermod -aG docker $USER
-```
-
-### 1.3 Validate
-
-```bash
-docker --version
-sudo docker run --rm hello-world
-ping -c 2 192.168.70.2   # may fail if trex has TRex DPDK-bound; ok
-```
-
----
-
-## Phase 2 — Build BESS-UPF on the UPF host
-
-### 2.1 Clone repos
+### 2.4 Clone repositories
 
 ```bash
 mkdir -p ~/bess-upf
@@ -109,52 +194,69 @@ git clone https://github.com/omec-project/upf.git
 git clone https://github.com/omec-project/bess.git
 ```
 
-### 2.2 Build BESS Docker images
+### 2.5 Build BESS UPF Docker images
 
 ```bash
 cd ~/bess-upf/upf
-sudo make docker-build
+sudo make DOCKER_BUILD_ARGS="--network=host" docker-build
 ```
 
-This step takes 15–30 minutes. It pulls the bess_build image, compiles BESS,
-the BESS-UPF modules, and pfcpiface (Go).
-
-Outputs (verify):
-
-```bash
-sudo docker images | grep -E "upf|bess"
-```
+The `--network=host` argument avoids DNS failures inside Docker builds in IPv6 or OpenStack environments.
 
 Expected images:
 
-```
-upf-epc-pfcpiface     latest      ...
-upf-epc-bess          latest      ...
+```bash
+sudo docker images | grep -E 'upf|bess|pfcp'
 ```
 
-If build fails on `make docker-build`, try the lower-level target first:
+Validated result:
+
+```text
+upf-bess:2.4.2-dev
+upf-pfcp:2.4.2-dev
+```
+
+### 2.6 Configure hugepages for BESS
+
+Even in AF_PACKET mode, the BESS daemon initializes DPDK memory pools. Configure hugepages:
 
 ```bash
-sudo docker pull omecproject/upf-epc-bess:master-latest
-sudo docker pull omecproject/upf-epc-pfcpiface:master-latest
-sudo docker tag omecproject/upf-epc-bess:master-latest upf-epc-bess:latest
-sudo docker tag omecproject/upf-epc-pfcpiface:master-latest upf-epc-pfcpiface:latest
+sudo mkdir -p /dev/hugepages
+sudo mount -t hugetlbfs nodev /dev/hugepages || true
+sudo sysctl -w vm.nr_hugepages=1024
 ```
 
-This skips local build and uses pre-published images.
+Validate:
 
----
+```bash
+grep -i Huge /proc/meminfo
+mount | grep huge
+```
 
-## Phase 3 — Configure BESS-UPF (AF_PACKET mode)
+Expected:
 
-### 3.1 Create config directory
+```text
+HugePages_Total: 1024
+HugePages_Free: 1024
+hugetlbfs on /dev/hugepages
+```
+
+To persist:
+
+```bash
+echo "vm.nr_hugepages=1024" | sudo tee /etc/sysctl.d/90-hugepages.conf
+```
+
+## 3. UPF configuration
+
+Create a clean configuration directory:
 
 ```bash
 mkdir -p ~/bess-upf/config
 cd ~/bess-upf/config
 ```
 
-### 3.2 Write upf.jsonc
+### 3.1 Create upf.jsonc
 
 ```bash
 cat > ~/bess-upf/config/upf.jsonc <<'EOF'
@@ -198,23 +300,13 @@ cat > ~/bess-upf/config/upf.jsonc <<'EOF'
 EOF
 ```
 
-Key settings:
-
-- `mode: af_packet` — uses kernel sockets, not DPDK
-- `access.ifname: enp7s0np0` — N3 (where GTP-U arrives from gNB/TRex)
-- `core.ifname: enp8s0np0` — N6 (where decapsulated traffic exits to DN)
-- `measure_flow: true` — enables per-PDR/per-flow metrics
-- `cpiface.http_port: 8080` — Prometheus and HTTP endpoints
-
-### 3.3 Write docker-compose.yml
+### 3.2 Create docker compose file
 
 ```bash
 cat > ~/bess-upf/config/docker-compose.yml <<'EOF'
-version: "3.7"
-
 services:
   bess:
-    image: upf-epc-bess:latest
+    image: upf-bess:2.4.2-dev
     container_name: bess
     network_mode: host
     privileged: true
@@ -228,26 +320,12 @@ services:
       - ./upf.jsonc:/opt/bess/bessctl/conf/upf.jsonc
       - /sys/devices/system/node:/sys/devices/system/node
       - /lib/modules:/lib/modules
+      - /dev/hugepages:/dev/hugepages
     command: >
       -grpc-url=0.0.0.0:10514
-    healthcheck:
-      test: ["CMD", "/opt/bess/bessctl/bessctl", "show", "version"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  bess-routectl:
-    image: upf-epc-bess:latest
-    container_name: bess-routectl
-    network_mode: host
-    pid: "host"
-    depends_on:
-      - bess
-    entrypoint: ["/opt/bess/bessctl/conf/route_control.py"]
-    command: ["-i", "enp7s0np0", "enp8s0np0"]
 
   pfcpiface:
-    image: upf-epc-pfcpiface:latest
+    image: upf-pfcp:2.4.2-dev
     container_name: pfcpiface
     network_mode: host
     cap_add:
@@ -261,136 +339,353 @@ services:
 EOF
 ```
 
-### 3.4 Bring up BESS-UPF
+### 3.3 Start BESS and pfcpiface
 
 ```bash
 cd ~/bess-upf/config
 sudo docker compose up -d
-
-sleep 10
-sudo docker ps
-sudo docker logs bess --tail 30
-sudo docker logs pfcpiface --tail 30
 ```
 
-Expected logs:
-
-```
-bess:        BESS daemon started, listening on 0.0.0.0:10514
-pfcpiface:   PFCP server started on 0.0.0.0:8805
-pfcpiface:   gRPC connected to bess at localhost:10514
-```
-
-### 3.5 Validate PFCP listener
+Load the BESS UPF pipeline:
 
 ```bash
+sudo docker exec bess bash -lc 'cd /opt/bess/bessctl && ./bessctl run up4'
+```
+
+Start the route controller:
+
+```bash
+sudo docker rm -f bess-routectl 2>/dev/null || true
+
+sudo docker run --name bess-routectl -td --restart unless-stopped \
+  --net host \
+  --pid container:bess \
+  --entrypoint python3 \
+  -v ~/bess-upf/upf/conf/route_control.py:/route_control.py \
+  upf-bess:2.4.2-dev \
+  /route_control.py -i enp7s0np0 enp8s0np0
+```
+
+Validate:
+
+```bash
+sudo docker ps
+sudo ss -ltnp | grep 10514
 sudo ss -lunp | grep 8805
-curl -s http://127.0.0.1:8080/metrics | head -20
+curl -s http://127.0.0.1:8080/metrics | head
 ```
 
 Expected:
 
+```text
+bess running
+pfcpiface running
+bess-routectl running
+BESS gRPC on 10514
+PFCP on 8805
+HTTP metrics on 8080
 ```
-UNCONN  *:8805  ...  pfcpiface
-# HELP upf_messages_total ...
-# TYPE upf_messages_total counter
-```
 
-If this works, BESS-UPF is up and waiting for PFCP from pfcpsim.
+## 4. UPF route and neighbor requirements for N6
 
----
+Because TRex uses DPDK, the Linux kernel on the TRex host does not reliably answer ARP on the N6 interface during traffic generation.
 
-## Phase 4 — Configure pfcpsim on the TRex host
-
-The pfcpsim is already patched (URR per TEID via AddURRID). It runs in a
-container on the trex host.
-
-### 4.1 Image and run
+Install a static neighbor and an onlink host route on the UPF host:
 
 ```bash
-# on trex host
-sudo docker rm -f pfcpsim 2>/dev/null
-
-sudo docker run --rm -d --network host \
-  --name pfcpsim \
-  pfcpsim:patched \
-  -p 12345 \
-  --interface enp7s0np0
+sudo ip neigh replace 192.168.80.2 lladdr 10:70:fd:c0:ef:81 dev enp8s0np0 nud permanent
+sudo ip route replace 192.168.80.2/32 via 192.168.80.2 dev enp8s0np0 onlink
 ```
 
-If you don't have the patched image on this host, copy it from the build host:
+Restart the route controller so it programs the BESS route module:
 
 ```bash
-# on the host where pfcpsim:patched was built
-sudo docker save pfcpsim:patched | gzip > pfcpsim-patched.tar.gz
-scp pfcpsim-patched.tar.gz ubuntu@trex:/tmp/
-
-# on trex host
-sudo docker load < /tmp/pfcpsim-patched.tar.gz
+sudo docker restart bess-routectl
+sleep 3
+sudo docker logs bess-routectl --tail 20
 ```
 
-### 4.2 Configure and associate
+Expected log:
+
+```text
+Mac address found for 192.168.80.2, Mac: 10:70:fd:c0:ef:81
+Route entry 192.168.80.2/32 added to enp8s0np0Routes
+Module enp8s0np0Routes:0->0/enp8s0np0DstMAC1070FDC0EF81 linked
+```
+
+Validate route module:
 
 ```bash
-# on trex host
-
-# point pfcpsim at the new BESS-UPF
-sudo docker exec pfcpsim pfcpctl -s localhost:12345 service configure \
-  --n3-addr 192.168.70.2 \
-  --remote-peer-addr 192.168.70.1
-
-sudo docker exec pfcpsim pfcpctl -s localhost:12345 service associate
+sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes
 ```
 
-Expected: `Association established`.
+Expected:
 
-### 4.3 Create 3 sessions (UDP filter for TRex compatibility)
+```text
+Output gate 0 to enp8s0np0DstMAC1070FDC0EF81
+Output gate 8191 to enp8s0np0bad_route
+```
+
+The old `bad_route` counter may remain from previous tests. The important condition is that gate `0` increases during valid traffic.
+
+## 5. TRex host installation
+
+Run these steps on the TRex host.
+
+### 5.1 Install base packages
 
 ```bash
-sudo docker exec pfcpsim pfcpctl -s localhost:12345 session create \
-  --count 3 --baseID 1 \
-  --ue-pool 10.250.0.0/24 \
-  --gnb-addr 192.168.70.2 \
-  --app-filter "udp:any:any:allow:100"
+sudo apt update
+sudo apt install -y \
+  git \
+  make \
+  curl \
+  jq \
+  net-tools \
+  tcpdump \
+  python3-pip \
+  docker.io \
+  docker-compose-v2 \
+  libibverbs1 \
+  ibverbs-providers \
+  librdmacm1 \
+  libmlx5-1
 ```
 
-Expected: `3 sessions were established using 1 as baseID`.
-
-### 4.4 Validate sessions on UPF host
+Enable Docker:
 
 ```bash
-# on upf host
-curl -s http://127.0.0.1:8080/metrics | grep -E "session|pdr" | head -20
+sudo systemctl enable --now docker
+sudo docker --version
 ```
 
-Look for non-zero session/PDR counters.
-
-You can also inspect BESS modules directly:
+### 5.2 Configure TRex interfaces
 
 ```bash
-sudo docker exec bess /opt/bess/bessctl/bessctl show pipeline | head -30
-sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup
+sudo ip link set enp7s0np0 up
+sudo ip link set enp8s0np0 up
+sudo ip link set enp9s0 up
+
+sudo ip addr flush dev enp7s0np0
+sudo ip addr flush dev enp8s0np0
+sudo ip addr flush dev enp9s0
+
+sudo ip addr add 192.168.70.2/24 dev enp7s0np0
+sudo ip addr add 192.168.80.2/24 dev enp8s0np0
+sudo ip addr add 192.168.90.2/24 dev enp9s0
+
+sudo ip link set enp7s0np0 mtu 1500
+sudo ip link set enp8s0np0 mtu 1500
+sudo ip link set enp9s0 mtu 1500
+
+ip -br addr show enp7s0np0
+ip -br addr show enp8s0np0
+ip -br addr show enp9s0
 ```
 
----
+Validate control connectivity:
 
-## Phase 5 — Generate traffic with TRex
+```bash
+ping -c 3 192.168.90.1
+```
 
-### 5.1 Profile (3 streams, UDP inner, per-TEID pg_id)
+### 5.3 Install TRex v3.08
 
-On the trex host, place the profile at
-`/opt/trex/v3.08/automation/exp2/exp2_profile.py`:
+```bash
+cd /tmp
 
-```python
-"""
-TRex stateless profile for 3 concurrent GTP-U streams.
-TEIDs 1, 11, 21. Inner UDP (matches BESS-UPF SDF filter).
-Per-stream tx/rx/latency via STLFlowLatencyStats.
-"""
-from trex_stl_lib.api import (
-    Ether, IP, UDP,
-    STLStream, STLPktBuilder, STLTXCont, STLFlowLatencyStats,
-)
+wget --no-check-certificate https://trex-tgn.cisco.com/trex/release/v3.08.tar.gz
+
+sudo mkdir -p /opt/trex
+sudo tar -xzf v3.08.tar.gz -C /opt/trex
+
+ls -d /opt/trex/v3.08
+ls /opt/trex/v3.08/t-rex-64
+```
+
+### 5.4 Install Mellanox OFED userspace for TRex
+
+The Ubuntu stock `libmlx5` may not provide `MLX5_1.24`, which TRex v3.08 may require.
+
+Install MLNX OFED 5.9 userspace:
+
+```bash
+cd /tmp
+
+wget https://www.mellanox.com/downloads/ofed/MLNX_OFED-5.9-0.5.6.0/MLNX_OFED_LINUX-5.9-0.5.6.0-ubuntu22.04-x86_64.tgz
+
+tar xzf MLNX_OFED_LINUX-5.9-0.5.6.0-ubuntu22.04-x86_64.tgz
+
+cd MLNX_OFED_LINUX-5.9-0.5.6.0-ubuntu22.04-x86_64
+
+sudo ./mlnxofedinstall --user-space-only --without-fw-update
+sudo ldconfig
+```
+
+Validate:
+
+```bash
+strings /lib/x86_64-linux-gnu/libmlx5.so.1 | grep MLX5_1.24
+```
+
+Expected:
+
+```text
+MLX5_1.24
+```
+
+### 5.5 Load RDMA Verbs modules
+
+If TRex reports `Verbs device not found`, load the modules:
+
+```bash
+sudo modprobe ib_uverbs
+sudo modprobe rdma_ucm
+sudo modprobe mlx5_ib
+```
+
+Validate:
+
+```bash
+ls -l /dev/infiniband
+ibv_devinfo
+```
+
+Expected:
+
+```text
+uverbs0
+uverbs1
+mlx5_0 PORT_ACTIVE
+mlx5_1 PORT_ACTIVE
+```
+
+If modules are missing, install extras for the running kernel:
+
+```bash
+sudo apt install -y linux-modules-extra-$(uname -r)
+```
+
+Then repeat the `modprobe` commands.
+
+### 5.6 Generate TRex port configuration
+
+```bash
+cd /opt/trex/v3.08
+sudo ./dpdk_setup_ports.py -s
+```
+
+Expected Mellanox devices:
+
+```text
+0000:07:00.0 enp7s0np0 mlx5_core
+0000:08:00.0 enp8s0np0 mlx5_core
+```
+
+Run the interactive configuration:
+
+```bash
+sudo ./dpdk_setup_ports.py -i
+```
+
+Choose MAC based config.
+
+Select interfaces:
+
+```text
+1 2
+```
+
+Use these destination MACs:
+
+```text
+Interface 1, TRex N3, destination MAC: 10:70:fd:c1:59:c4
+Interface 2, TRex N6, destination MAC: 10:70:fd:c1:59:c5
+```
+
+Validated `/etc/trex_cfg.yaml`:
+
+```yaml
+- version: 2
+  interfaces: ['07:00.0', '08:00.0']
+  port_mtu: 1500
+  port_info:
+      - dest_mac: 10:70:fd:c1:59:c4
+        src_mac:  10:70:fd:c0:ef:80
+      - dest_mac: 10:70:fd:c1:59:c5
+        src_mac:  10:70:fd:c0:ef:81
+
+  platform:
+      master_thread_id: 0
+      latency_thread_id: 1
+      dual_if:
+        - socket: 0
+          threads: [2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+```
+
+If TRex fails with MTU 65518, add `port_mtu: 1500` as shown above.
+
+## 6. Build pfcpsim on the TRex host
+
+```bash
+cd ~
+git clone https://github.com/omec-project/pfcpsim.git
+cd pfcpsim
+```
+
+The Dockerfile may need a copy destination fix.
+
+Check:
+
+```bash
+grep -n 'COPY --from=builder' Dockerfile
+```
+
+If it contains this:
+
+```Dockerfile
+COPY --from=builder /pfcpctl/pfcp* /usr/local/bin
+```
+
+Fix it:
+
+```bash
+sed -i 's|COPY --from=builder /pfcpctl/pfcp\* /usr/local/bin|COPY --from=builder /pfcpctl/pfcp* /usr/local/bin/|' Dockerfile
+```
+
+Build with host networking to avoid DNS issues during Go module download:
+
+```bash
+sudo docker build --network=host -t pfcpsim:patched .
+```
+
+Validate:
+
+```bash
+sudo docker images | grep pfcpsim
+```
+
+Expected:
+
+```text
+pfcpsim:patched
+```
+
+## 7. TRex traffic profiles
+
+Create directory:
+
+```bash
+mkdir -p /opt/trex/v3.08/automation/exp2
+```
+
+### 7.1 Functional GTP U profile
+
+This profile validates forwarding from N3 to N6.
+
+```bash
+cat > /opt/trex/v3.08/automation/exp2/exp2_profile.py <<'EOF'
+from trex_stl_lib.api import *
 from scapy.contrib.gtp import GTP_U_Header
 
 GNB_IP = "192.168.70.2"
@@ -404,19 +699,20 @@ SLICES = [
     {"teid": 21, "ue_ip": "10.250.0.3", "src_port": 10021},
 ]
 
-
 class STLS1(object):
     def get_streams(self, direction=0, **kwargs):
         streams = []
         for s in SLICES:
-            outer = IP(src=GNB_IP, dst=UPF_N3_IP) / UDP(sport=2152, dport=2152)
-            gtpu = GTP_U_Header(teid=s["teid"])
-            inner = (
-                IP(src=s["ue_ip"], dst=DN_IP)
+            pkt = (
+                Ether()
+                / IP(src=GNB_IP, dst=UPF_N3_IP)
+                / UDP(sport=2152, dport=2152, chksum=0)
+                / GTP_U_Header(teid=s["teid"])
+                / IP(src=s["ue_ip"], dst=DN_IP)
                 / UDP(sport=s["src_port"], dport=5555)
                 / ("X" * PAYLOAD_BYTES)
             )
-            pkt = Ether() / outer / gtpu / inner
+
             streams.append(
                 STLStream(
                     packet=STLPktBuilder(pkt=pkt),
@@ -426,239 +722,688 @@ class STLS1(object):
             )
         return streams
 
+def register():
+    return STLS1()
+EOF
+```
+
+Critical detail:
+
+```text
+The outer UDP checksum is set to zero.
+Without this, BESS L4 checksum validation drops most packets before PDR lookup.
+```
+
+### 7.2 Latency profile
+
+This profile was validated with TRex in software mode.
+
+```bash
+cat > /opt/trex/v3.08/automation/exp2/exp2_latency_profile.py <<'EOF'
+from trex_stl_lib.api import *
+from scapy.contrib.gtp import GTP_U_Header
+
+GNB_IP = "192.168.70.2"
+UPF_N3_IP = "192.168.70.1"
+DN_IP = "192.168.80.2"
+
+SLICES = [
+    {"teid": 1,  "ue_ip": "10.250.0.1", "src_port": 10001, "pg_id": 1},
+    {"teid": 11, "ue_ip": "10.250.0.2", "src_port": 10011, "pg_id": 11},
+    {"teid": 21, "ue_ip": "10.250.0.3", "src_port": 10021, "pg_id": 21},
+]
+
+class STLS1(object):
+    def get_streams(self, direction=0, **kwargs):
+        streams = []
+
+        for s in SLICES:
+            pkt = (
+                Ether()
+                / IP(src=GNB_IP, dst=UPF_N3_IP)
+                / UDP(sport=2152, dport=2152, chksum=0)
+                / GTP_U_Header(teid=s["teid"])
+                / IP(src=s["ue_ip"], dst=DN_IP)
+                / UDP(sport=s["src_port"], dport=5555, chksum=0)
+                / ("X" * 128)
+            )
+
+            streams.append(
+                STLStream(
+                    name="lat_teid_%s" % s["teid"],
+                    packet=STLPktBuilder(pkt=pkt),
+                    mode=STLTXCont(pps=100),
+                    flow_stats=STLFlowLatencyStats(pg_id=s["pg_id"]),
+                )
+            )
+
+        return streams
 
 def register():
     return STLS1()
+EOF
 ```
 
-### 5.2 Start TRex daemon
+Critical detail:
+
+```text
+The latency profile sets both outer and inner UDP checksums to zero.
+TRex latency tracking worked after restarting TRex with --software.
+```
+
+## 8. Bring up the full testbed
+
+### 8.1 UPF run order
+
+Run on the UPF host:
 
 ```bash
-sudo /opt/trex/v3.08/t-rex-64 -i --no-ofed-check -c 8 &
-sleep 30
-```
+cd ~/bess-upf/config
 
-### 5.3 Inject traffic
-
-```bash
-sudo /opt/trex/v3.08/trex-console
-```
-
-In the console:
-
-```
-service --port 1
-start -f /opt/trex/v3.08/automation/exp2/exp2_profile.py -p 0 -m 90mbps -d 30 --force
-```
-
-After 30 seconds:
-
-```
-stats -s
-```
-
-Expected (this is the validation that BESS-UPF works where eUPF didn't):
-
-```
-PG ID    |   1   |   11   |   21
-Tx pps   |  ~10k |  ~10k  |  ~10k
-Rx pps   |  ~10k |  ~10k  |  ~10k     ← non-zero!
-opackets | ~300k | ~300k  | ~300k
-ipackets | ~300k | ~300k  | ~300k     ← non-zero!
-```
-
-If `ipackets > 0` per pg_id, BESS-UPF is correctly delivering and TRex
-correctly correlates per-stream — what you couldn't get with eUPF.
-
----
-
-## Phase 6 — Per-slice metrics via Prometheus
-
-### 6.1 Query BESS-UPF metrics on the UPF host
-
-```bash
-# total per-PDR packet count
-curl -s http://127.0.0.1:8080/metrics | grep upf_pdr_packets_total
-
-# per-flow latency (if measure_flow=true was set)
-curl -s http://127.0.0.1:8080/metrics | grep upf_flow_latency
-
-# per-slice byte counters
-curl -s http://127.0.0.1:8080/metrics | grep upf_session_bytes
-```
-
-You can also use the bessctl CLI for live introspection:
-
-```bash
-# inside bess container
-sudo docker exec -it bess /opt/bess/bessctl/bessctl
-> show module qosMeasureIn
-> show module qosMeasureOut
-> monitor pipeline
-> quit
-```
-
-### 6.2 Wire into your existing InfluxDB collector
-
-Modify your existing `collector_eupf_influx.py` (rename to
-`collector_bess_influx.py`) to scrape Prometheus instead of bpftool.
-
-Pseudo-pattern:
-
-```python
-import requests
-metrics = requests.get("http://127.0.0.1:8080/metrics", timeout=2).text
-# parse Prometheus exposition format
-# tag each metric with teid (extract from labels)
-# write to InfluxDB
-```
-
-The Prometheus Python client (`prometheus_client.parser`) parses the
-exposition format directly:
-
-```python
-from prometheus_client.parser import text_string_to_metric_families
-for family in text_string_to_metric_families(metrics):
-    for sample in family.samples:
-        # sample.name, sample.labels, sample.value
-        ...
-```
-
----
-
-## Phase 7 — DPDK migration (when ready for line rate)
-
-When AF_PACKET caps you at 5–10 Gbps and you want to push 25 Gbps:
-
-### 7.1 Hugepages
-
-```bash
-sudo sysctl -w vm.nr_hugepages=2048
-echo "vm.nr_hugepages=2048" | sudo tee -a /etc/sysctl.conf
-```
-
-### 7.2 OFED userspace (matches what TRex needs)
-
-```bash
-# download MLNX_OFED 5.9 for Ubuntu 22.04
-wget https://www.mellanox.com/downloads/ofed/MLNX_OFED-5.9-0.5.6.0/MLNX_OFED_LINUX-5.9-0.5.6.0-ubuntu22.04-x86_64.tgz
-tar xzf MLNX_OFED_LINUX-*-ubuntu22.04-x86_64.tgz
-cd MLNX_OFED_LINUX-*-ubuntu22.04-x86_64
-sudo ./mlnxofedinstall --user-space-only --without-fw-update
-```
-
-### 7.3 Update upf.jsonc
-
-```jsonc
-{
-  "mode": "dpdk",
-  "access": {
-    "ifname": "0000:07:00.0"   // PCI address, not interface name
-  },
-  "core": {
-    "ifname": "0000:08:00.0"
-  },
-  ...
-}
-```
-
-### 7.4 Recreate compose with hugepages mount
-
-Add to docker-compose.yml under bess service:
-
-```yaml
-    volumes:
-      - /dev/hugepages:/dev/hugepages
-    cap_add:
-      - SYS_NICE
-      - SYS_ADMIN
-      - IPC_LOCK
-```
-
-### 7.5 Restart
-
-```bash
-sudo docker compose down
 sudo docker compose up -d
+
+sudo docker exec bess bash -lc 'cd /opt/bess/bessctl && ./bessctl run up4'
+
+sudo ip neigh replace 192.168.80.2 lladdr 10:70:fd:c0:ef:81 dev enp8s0np0 nud permanent
+sudo ip route replace 192.168.80.2/32 via 192.168.80.2 dev enp8s0np0 onlink
+
+sudo docker rm -f bess-routectl 2>/dev/null || true
+sudo docker run --name bess-routectl -td --restart unless-stopped \
+  --net host \
+  --pid container:bess \
+  --entrypoint python3 \
+  -v ~/bess-upf/upf/conf/route_control.py:/route_control.py \
+  upf-bess:2.4.2-dev \
+  /route_control.py -i enp7s0np0 enp8s0np0
+
+sleep 3
+sudo docker logs bess-routectl --tail 20
 ```
 
-Expected: BESS now uses DPDK PMD on Mellanox, kernel loses access to those
-interfaces (just like TRex). Throughput jumps from ~5 Gbps to 25 Gbps.
-
----
-
-## Troubleshooting
-
-### BESS won't start
-
-```bash
-sudo docker logs bess
-```
-
-Common issues:
-
-- "interface not found" — Mellanox names changed; update upf.jsonc
-- "permission denied on hugepages" — only relevant in DPDK mode
-- "module already loaded" — `sudo docker compose down` and try again
-
-### pfcpiface logs show "could not connect to bess"
-
-bess container failed to start. Check `docker logs bess`. Confirm gRPC
-port 10514 is open:
+Validate:
 
 ```bash
 sudo ss -ltnp | grep 10514
+sudo ss -lunp | grep 8805
+curl -s http://127.0.0.1:8080/metrics | head
 ```
 
-### pfcpsim association timeouts
+### 8.2 pfcpsim run order
 
-Same diagnosis as before. Confirm PFCP destination is reachable:
+Run on the TRex host:
 
 ```bash
-# on trex host
-sudo docker exec pfcpsim ping -c 2 192.168.70.1
+sudo docker rm -f pfcpsim 2>/dev/null || true
+
+sudo docker run --rm -d --network host \
+  --name pfcpsim \
+  pfcpsim:patched \
+  -p 12345 \
+  --interface enp9s0
 ```
 
-If no route, restart pfcpsim with the right interface:
+Configure PFCP:
 
 ```bash
-sudo docker rm -f pfcpsim
-sudo docker run --rm -d --network host --name pfcpsim \
-  pfcpsim:patched -p 12345 --interface enp7s0np0
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 service configure \
+  --n3-addr 192.168.70.1 \
+  --remote-peer-addr 192.168.90.1
 ```
 
-### TRex porta 1 ipackets stays 0
+Important:
 
-Service mode required (TRex defaults to MAC-filtered RX):
-
+```text
+--n3-addr must be the UPF N3 address, 192.168.70.1.
+--remote-peer-addr must be the UPF PFCP control address, 192.168.90.1.
+--gnb-addr in session create must be the TRex N3 address, 192.168.70.2.
 ```
+
+Associate and create sessions:
+
+```bash
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 service associate
+
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 session create \
+  --count 3 --baseID 1 \
+  --ue-pool 10.250.0.0/24 \
+  --gnb-addr 192.168.70.2 \
+  --app-filter "udp:any:any:allow:100"
+```
+
+Validate on UPF:
+
+```bash
+curl -s http://127.0.0.1:8080/metrics | grep pfcp_sessions
+
+sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup | grep rules
+sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup | grep rules
+```
+
+Expected:
+
+```text
+pfcp_sessions{node_id="192.168.90.2"} 3
+pdrLookup 6 rules
+farLookup 6 rules
+```
+
+## 9. Functional forwarding test
+
+Start TRex in normal mode:
+
+```bash
+cd /opt/trex/v3.08
+sudo ./t-rex-64 -i --no-ofed-check -c 8
+```
+
+In another terminal:
+
+```bash
+cd /opt/trex/v3.08
+sudo ./trex-console
+```
+
+In the TRex console:
+
+```text
 service --port 1
+start -f /opt/trex/v3.08/automation/exp2/exp2_profile.py -p 0 -m 10mbps -d 10 --force
+stats
 ```
 
-If still zero, BESS-UPF is not forwarding. Check:
+Expected TRex result:
+
+```text
+Port 0 opackets increases
+Port 1 ipackets increases
+oerrors 0
+ierrors 0
+```
+
+Validated example:
+
+```text
+Port 0 opackets 60006
+Port 1 ipackets 30046
+Port 1 rx bytes about 3.3 MB
+oerrors 0
+ierrors 0
+```
+
+Validate on UPF:
+
+```bash
+sudo docker exec bess /opt/bess/bessctl/bessctl show module gtpuDecap
+sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup
+sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes
+sudo docker exec bess /opt/bess/bessctl/bessctl show port | grep -A8 enp8s0np0Fast
+```
+
+Expected:
+
+```text
+gtpuDecap packets increase
+farLookup packets increase
+farLookupFail remains 0
+enp8s0np0Routes gate 0 increases
+enp8s0np0Fast Out/TX increases
+dropped 0
+```
+
+## 10. Latency test
+
+For latency, start TRex in software mode:
+
+```bash
+cd /opt/trex/v3.08
+sudo ./t-rex-64 -i --software --no-ofed-check -c 8
+```
+
+In another terminal:
+
+```bash
+cd /opt/trex/v3.08
+sudo ./trex-console
+```
+
+In the TRex console:
+
+```text
+service --port 1
+start -f /opt/trex/v3.08/automation/exp2/exp2_latency_profile.py -p 0 -d 10 --force
+stats -l
+```
+
+Validated latency example:
+
+```text
+PG ID 1
+TX pkts 1001
+RX pkts 1001
+Avg latency 40448 us
+Jitter 3
+
+PG ID 11
+TX pkts 1001
+RX pkts 1001
+Avg latency 40444 us
+Jitter 6
+
+PG ID 21
+TX pkts 1001
+RX pkts 1001
+Avg latency 40456 us
+Jitter 6
+```
+
+Interpretation:
+
+```text
+40448 us is about 40.448 ms.
+This is end to end software instrumented latency in the current AF_PACKET setup.
+It should not be interpreted as Mellanox NIC latency.
+```
+
+## 11. Useful monitoring commands
+
+### 11.1 UPF health
+
+```bash
+sudo docker ps
+sudo docker logs bess --tail 50
+sudo docker logs pfcpiface --tail 50
+sudo docker logs bess-routectl --tail 50
+```
+
+### 11.2 PFCP sessions
+
+```bash
+curl -s http://127.0.0.1:8080/metrics | grep pfcp_sessions
+```
+
+### 11.3 BESS pipeline and modules
+
+```bash
+sudo docker exec bess /opt/bess/bessctl/bessctl show pipeline | head -40
+
+sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup
+sudo docker exec bess /opt/bess/bessctl/bessctl show module gtpuDecap
+sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup
+sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes
+```
+
+### 11.4 BESS ports
 
 ```bash
 sudo docker exec bess /opt/bess/bessctl/bessctl show port
+sudo docker exec bess /opt/bess/bessctl/bessctl show port | grep -A8 enp8s0np0Fast
 ```
 
----
+### 11.5 TRex counters
 
-## Reference
-
-- [omec-project/upf](https://github.com/omec-project/upf)
-- [omec-project/bess](https://github.com/omec-project/bess)
-- [omec-project/pfcpsim](https://github.com/omec-project/pfcpsim)
-- [BESS-UPF docs](https://github.com/omec-project/upf/tree/master/docs)
-- [Aether SD-Core docs](https://docs.sd-core.opennetworking.org/)
-
-## Quick reference — run order each session
-
+```text
+stats
+stats -s
+stats -l
 ```
-upf:   sudo docker compose -f ~/bess-upf/config/docker-compose.yml up -d
-trex:  sudo docker run --rm -d --network host --name pfcpsim pfcpsim:patched -p 12345 --interface enp7s0np0
-trex:  sudo docker exec pfcpsim pfcpctl -s localhost:12345 service configure --n3-addr 192.168.70.2 --remote-peer-addr 192.168.70.1
-trex:  sudo docker exec pfcpsim pfcpctl -s localhost:12345 service associate
-trex:  sudo docker exec pfcpsim pfcpctl -s localhost:12345 session create --count 3 --baseID 1 --ue-pool 10.250.0.0/24 --gnb-addr 192.168.70.2 --app-filter "udp:any:any:allow:100"
-trex:  sudo /opt/trex/v3.08/t-rex-64 -i --no-ofed-check -c 8 &
-trex:  sudo /opt/trex/v3.08/trex-console
+
+## 12. Troubleshooting
+
+### 12.1 Docker build fails with BuildKit buildx missing
+
+Install buildx:
+
+```bash
+sudo apt update
+sudo apt install -y docker-buildx
+```
+
+If using Docker CE repositories, the package may be:
+
+```bash
+sudo apt install -y docker-buildx-plugin
+```
+
+### 12.2 Docker build fails resolving Ubuntu or Go hosts
+
+Use host networking:
+
+```bash
+sudo make DOCKER_BUILD_ARGS="--network=host" docker-build
+sudo docker build --network=host -t pfcpsim:patched .
+```
+
+### 12.3 BESS fails with hugepage error
+
+Error example:
+
+```text
+Cannot get hugepage information
+rte_eal_init failed
+```
+
+Fix:
+
+```bash
+sudo mkdir -p /dev/hugepages
+sudo mount -t hugetlbfs nodev /dev/hugepages || true
+sudo sysctl -w vm.nr_hugepages=1024
+```
+
+Make sure the BESS container mounts:
+
+```yaml
+- /dev/hugepages:/dev/hugepages
+```
+
+### 12.4 pfcpiface says pdrLookup not found
+
+The BESS pipeline was not loaded.
+
+Fix:
+
+```bash
+sudo docker exec bess bash -lc 'cd /opt/bess/bessctl && ./bessctl run up4'
+sudo docker restart pfcpiface
+```
+
+### 12.5 pdrLookup has 0 rules
+
+Sessions are not installed or were lost.
+
+Check:
+
+```bash
+curl -s http://127.0.0.1:8080/metrics | grep pfcp_sessions
+```
+
+Recreate pfcpsim association and sessions.
+
+Use PFCP control through `enp9s0`, not N3.
+
+### 12.6 PFCP sessions disappear after timeout
+
+Symptom:
+
+```text
+read timeout for connection
+removed connection to 192.168.70.2:8805
+```
+
+Cause:
+
+```text
+PFCP was using N3, but TRex DPDK takes over the N3 interface.
+```
+
+Fix:
+
+```text
+Use enp9s0 for PFCP control.
+TRex control IP 192.168.90.2.
+UPF control IP 192.168.90.1.
+```
+
+### 12.7 pdrLookup rules exist, but packets go to pdrLookupFail
+
+Check PDR in pfcpiface logs:
+
+```bash
+sudo docker logs pfcpiface --tail 40 | grep 'PDR(id'
+```
+
+Correct PDR must show:
+
+```text
+tunnelIPv4Dst=192.168.70.1
+```
+
+If it shows `192.168.70.2`, pfcpsim was configured incorrectly.
+
+Correct pfcpsim configuration:
+
+```bash
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 service configure \
+  --n3-addr 192.168.70.1 \
+  --remote-peer-addr 192.168.90.1
+```
+
+### 12.8 Most packets fail at accessRxL4Cksum
+
+Check:
+
+```bash
+sudo docker exec bess /opt/bess/bessctl/bessctl show module accessRxL4Cksum
+```
+
+Symptom:
+
+```text
+accessRxL4CksumFail increases heavily
+```
+
+Fix:
+
+```text
+Set outer UDP checksum to zero in the TRex GTP U profile.
+```
+
+Use:
+
+```python
+UDP(sport=2152, dport=2152, chksum=0)
+```
+
+### 12.9 gtpuDecap and farLookup work, but no N6 output
+
+Check:
+
+```bash
+sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes
+```
+
+If traffic goes to:
+
+```text
+enp8s0np0bad_route
+```
+
+Fix route and neighbor:
+
+```bash
+sudo ip neigh replace 192.168.80.2 lladdr 10:70:fd:c0:ef:81 dev enp8s0np0 nud permanent
+sudo ip route replace 192.168.80.2/32 via 192.168.80.2 dev enp8s0np0 onlink
+sudo docker restart bess-routectl
+```
+
+Expected route controller log:
+
+```text
+Route entry 192.168.80.2/32 added to enp8s0np0Routes
+```
+
+### 12.10 TRex fails with libibverbs missing
+
+Install:
+
+```bash
+sudo apt install -y libibverbs1 ibverbs-providers librdmacm1 libmlx5-1
+```
+
+### 12.11 TRex fails with MLX5_1.24 not found
+
+Install MLNX OFED userspace as described in section 5.4.
+
+Validate:
+
+```bash
+strings /lib/x86_64-linux-gnu/libmlx5.so.1 | grep MLX5_1.24
+```
+
+### 12.12 TRex fails with Verbs device not found
+
+Validate:
+
+```bash
+ls -l /dev/infiniband
+ibv_devinfo
+```
+
+Load modules:
+
+```bash
+sudo modprobe ib_uverbs
+sudo modprobe rdma_ucm
+sudo modprobe mlx5_ib
+```
+
+If missing:
+
+```bash
+sudo apt install -y linux-modules-extra-$(uname -r)
+```
+
+### 12.13 TRex fails setting MTU to 65518
+
+Edit `/etc/trex_cfg.yaml` and add:
+
+```yaml
+  port_mtu: 1500
+```
+
+### 12.14 stats shows port 1 RX, but stats -l shows RX pkts 0
+
+This means forwarding works, but latency correlation failed.
+
+Use TRex software mode:
+
+```bash
+sudo ./t-rex-64 -i --software --no-ofed-check -c 8
+```
+
+Then run:
+
+```text
+service --port 1
+start -f /opt/trex/v3.08/automation/exp2/exp2_latency_profile.py -p 0 -d 10 --force
+stats -l
+```
+
+Expected for valid latency:
+
+```text
+RX pkts > 0
+Avg latency > 0
+Errors 0
+```
+
+## 13. Clean baseline checklist
+
+Before experiments, ensure this baseline:
+
+On UPF:
+
+```bash
+curl -s http://127.0.0.1:8080/metrics | grep pfcp_sessions
+
+sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup | grep rules
+sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup | grep rules
+sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes
+```
+
+Expected:
+
+```text
+pfcp_sessions{node_id="192.168.90.2"} 3
+pdrLookup 6 rules
+farLookup 6 rules
+enp8s0np0Routes has gate 0 to enp8s0np0DstMAC1070FDC0EF81
+```
+
+On TRex:
+
+```text
+stats
+```
+
+Expected after a functional run:
+
+```text
+port 0 opackets increases
+port 1 ipackets increases
+errors remain 0
+```
+
+For latency:
+
+```text
+stats -l
+```
+
+Expected:
+
+```text
+PG ID 1, RX pkts > 0
+PG ID 11, RX pkts > 0
+PG ID 21, RX pkts > 0
+Errors 0
+```
+
+## 14. Recommended experiment progression
+
+Start with low rate:
+
+```text
+100 pps per TEID
+10 Mbps total
+```
+
+Then increase gradually:
+
+```text
+50 Mbps
+100 Mbps
+500 Mbps
+1 Gbps
+```
+
+At each step collect:
+
+```text
+TRex stats
+TRex stats -l
+UPF gtpuDecap packets
+UPF farLookup packets
+UPF enp8s0np0Fast Out/TX packets
+BESS drops
+pfcp_sessions
+CPU usage
+```
+
+Use these as the first experimental metrics:
+
+```text
+Per TEID TX packets
+Per TEID RX packets
+Per TEID average latency
+Per TEID max latency
+Per TEID jitter
+Port level packet loss
+UPF decap packet count
+UPF N6 output packet count
+BESS drops
+```
+
+## 15. Key conclusions from setup validation
+
+```text
+BESS UPF AF_PACKET forwarding is functional.
+PFCP must be separated from TRex controlled N3/N6 interfaces.
+enp9s0 is used as dedicated PFCP control.
+pfcpsim --n3-addr must point to the UPF N3 IP, 192.168.70.1.
+TRex --gnb-addr must point to TRex N3 IP, 192.168.70.2.
+Outer UDP checksum must be zero for GTP U traffic.
+N6 route and neighbor must be explicitly installed because TRex uses DPDK.
+TRex latency works with --software in this decapsulation scenario.
+The observed latency is software instrumented end to end testbed latency, not Mellanox hardware latency.
 ```

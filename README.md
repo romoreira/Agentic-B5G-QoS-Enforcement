@@ -2389,3 +2389,600 @@ FAR lookup failures: 0
 
 The measured average latency remained around 40 ms for all three PG IDs. Since this latency measurement used TRex software mode, this value should be interpreted as the latency of the current software-instrumented measurement setup, not as the intrinsic latency of the Mellanox NICs or the physical links alone.
 
+# Appendix, Per-Slice QoS Enforcement via Patched pfcpsim
+
+This appendix extends the previous DPDK BESS-UPF testbed README with the steps required to enable
+**per-slice Maximum Bit Rate (MBR) enforcement** through PFCP QoS Enforcement Rules (QERs).
+
+The goal is to move beyond uniform forwarding and start exercising the BESS-UPF QoS pipeline
+(`appQERLookup`, `sessionQERLookup`, `appQERMeterRed`) with **distinct rate limits per slice** that
+can be applied at session creation time and **modified at runtime without tearing sessions down**.
+
+The default `pfcpsim` shipped by the omec-project hardcodes MBR values inside `internal/pfcpsim/server.go`,
+so all created sessions share the same QER MBR. This appendix documents a minimal patch that exposes
+per-session MBR through the gRPC API and the `pfcpctl` CLI, plus the validation experiment.
+
+## B1. What this appendix adds on top of the existing setup
+
+```text
+- Per-session MBR uplink and downlink at session creation
+- Per-session MBR runtime modification through Session Modification Request (no session re-establishment)
+- pfcpctl flags: --session-mbr-uplink, --session-mbr-downlink, --app-mbr-uplink, --app-mbr-downlink
+- Validation that BESS appQERLookup gate 3 (appQERMeterRed) drops only the slice that exceeds its MBR
+- Per-slice TRex flow latency stats confirming policer behaviour per PG ID
+```
+
+What does **not** change:
+
+```text
+- BESS-UPF DPDK image (upf-bess:2.4.2-dev-mlx5)
+- pfcpiface image
+- BESS pipeline (up4)
+- Static N6 neighbor and route
+- TRex installation, OFED, DPDK config
+- N3, N6, control interface IPs and MACs
+```
+
+## B2. Patched pfcpsim source layout
+
+The patched fork keeps the original layout. Only four files change.
+
+```text
+~/pfcpsim_v2/
+├── api/pfcpsim.proto                          # adds 4 repeated uint64 MBR fields
+├── internal/pfcpsim/server.go                 # honors the new MBR fields in Create/Modify
+├── internal/pfcpctl/commands/sessions.go      # adds the 4 CLI flags, parses CSV
+└── Dockerfile                                 # regenerates protobuf at build time
+```
+
+Backup the originals before applying the patch:
+
+```bash
+cd ~/pfcpsim_v2
+mkdir -p .backup
+cp api/pfcpsim.proto .backup/
+cp internal/pfcpsim/server.go .backup/
+cp internal/pfcpctl/commands/sessions.go .backup/
+cp Dockerfile .backup/
+```
+
+## B3. Patched `api/pfcpsim.proto`
+
+Adds four `repeated uint64` lists, one element per session. Each value is in **kbps**. Empty list
+means "use defaults on Create" or "do not modify on Modify".
+
+```bash
+cat > api/pfcpsim.proto <<'EOF'
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2022-present Open Networking Foundation
+
+syntax = "proto3";
+package api;
+
+option go_package = ".;api";
+
+message CreateSessionRequest {
+  int32 count = 1;
+  int32 baseID = 2;
+  string nodeBAddress = 3;
+  string ueAddressPool = 4;
+  repeated string appFilters = 5;
+  int32 qfi = 6;
+  // Per-session MBR overrides (kbps). One value per session. If empty, defaults are used.
+  repeated uint64 sessionMbrUplink = 7;
+  repeated uint64 sessionMbrDownlink = 8;
+  repeated uint64 appMbrUplink = 9;
+  repeated uint64 appMbrDownlink = 10;
+}
+
+message ModifySessionRequest {
+  int32 count = 1;
+  int32 baseID = 2;
+  string nodeBAddress = 3;
+  string ueAddressPool = 4;
+  bool bufferFlag = 5;
+  bool notifyCPFlag = 6;
+  repeated string appFilters = 7;
+  // Per-session MBR overrides (kbps). Only categories with at least one non-empty list are updated.
+  repeated uint64 sessionMbrUplink = 8;
+  repeated uint64 sessionMbrDownlink = 9;
+  repeated uint64 appMbrUplink = 10;
+  repeated uint64 appMbrDownlink = 11;
+}
+
+message ConfigureRequest {
+  string upfN3Address = 1;
+  string remotePeerAddress = 3;
+}
+
+message DeleteSessionRequest {
+  int32 count = 1;
+  int32 baseID = 2;
+}
+
+message EmptyRequest {}
+
+message Response {
+  int32 status_code = 1;
+  string message = 2;
+}
+
+service PFCPSim {
+  rpc Configure (ConfigureRequest) returns (Response) {}
+  rpc Associate (EmptyRequest) returns (Response) {}
+  rpc Disassociate (EmptyRequest) returns (Response) {}
+  rpc CreateSession (CreateSessionRequest) returns (Response) {}
+  rpc ModifySession (ModifySessionRequest) returns (Response) {}
+  rpc DeleteSession (DeleteSessionRequest) returns (Response) {}
+}
+EOF
+```
+
+## B4. Patched `internal/pfcpsim/server.go`
+
+The two relevant pieces are:
+
+```text
+- pickMBR helper: returns the per-session value if provided, otherwise the default
+- ModifySession: only sends QER Update IEs for the categories that the caller actually asked to change
+```
+
+The full patched file is available in the project repository; the critical Modify behaviour is:
+
+```go
+updateSessionMBR := len(request.SessionMbrUplink) > 0 || len(request.SessionMbrDownlink) > 0
+updateAppMBR     := len(request.AppMbrUplink) > 0     || len(request.AppMbrDownlink) > 0
+
+// Only QERs explicitly requested are updated.
+if updateSessionMBR { /* push session-level QER update */ }
+if updateAppMBR     { /* push app-level QER updates    */ }
+```
+
+This avoids overwriting the session-level QER with defaults when the caller only wants to retune
+the application-level MBR, which was the failure mode observed in the first iteration of the patch.
+
+## B5. Patched `internal/pfcpctl/commands/sessions.go`
+
+Adds four CSV flags to both `session create` and `session modify`:
+
+```text
+--session-mbr-uplink     CSV in kbps, one value per session
+--session-mbr-downlink   CSV in kbps, one value per session
+--app-mbr-uplink         CSV in kbps, one value per session
+--app-mbr-downlink       CSV in kbps, one value per session
+```
+
+Empty input is treated as "no override". Invalid input (non-integer, negative, malformed CSV) is
+fatal and surfaces a clear error message before any gRPC call.
+
+## B6. Patched `Dockerfile`
+
+The original Dockerfile relied on pre-generated `.pb.go` files. After modifying `pfcpsim.proto`,
+the `.pb.go` artifacts must be regenerated. The patched Dockerfile installs `protoc` plus the Go
+plugins inside the build stage so the regeneration happens automatically and reproducibly:
+
+```Dockerfile
+FROM golang:1.26.2-bookworm AS builder
+WORKDIR /pfcpctl
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    protobuf-compiler && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/go/bin:${PATH}"
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2 && \
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
+
+COPY . .
+
+RUN protoc \
+    --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+    api/pfcpsim.proto
+
+RUN CGO_ENABLED=0 go build -o ./pfcpctl cmd/pfcpctl/main.go && \
+    CGO_ENABLED=0 go build -o ./pfcpsim cmd/pfcpsim/main.go
+
+FROM alpine:3.23 AS pfcpsim
+RUN apk add --no-cache tcpdump
+COPY --from=builder /pfcpctl/pfcp* /usr/local/bin/
+ENTRYPOINT [ "pfcpsim" ]
+```
+
+This means the host TRex machine does not need `protoc` or Go installed locally.
+
+## B7. Build the patched image
+
+Run on the TRex host:
+
+```bash
+cd ~/pfcpsim_v2
+sudo docker build --network=host -t pfcpsim:patched .
+```
+
+Validate:
+
+```bash
+sudo docker images | grep pfcpsim
+```
+
+Expected:
+
+```text
+pfcpsim   patched
+```
+
+## B8. Bring the patched pfcpsim up
+
+```bash
+sudo docker rm -f pfcpsim 2>/dev/null || true
+
+sudo docker run --rm -d --network host \
+  --name pfcpsim \
+  pfcpsim:patched \
+  -p 12345 \
+  --interface enp9s0
+```
+
+```bash
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 service configure \
+  --n3-addr 192.168.70.1 \
+  --remote-peer-addr 192.168.90.1
+
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 service associate
+```
+
+Confirm the new flags exist:
+
+```bash
+sudo docker exec pfcpsim pfcpctl session create --help
+```
+
+Expected (truncated):
+
+```text
+--session-mbr-uplink   string   Per-session uplink session-level MBR in kbps, CSV
+--session-mbr-downlink string   Per-session downlink session-level MBR in kbps, CSV
+--app-mbr-uplink       string   Per-session uplink app-level MBR in kbps, CSV
+--app-mbr-downlink     string   Per-session downlink app-level MBR in kbps, CSV
+```
+
+## B9. Create three sessions with different per-slice MBRs
+
+For the validation experiment, the application-level MBR is set per slice while the session-level
+MBR is kept high (1 Gbps) so that only the application-level policer is exercised.
+
+```bash
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 session create \
+  --count 3 --baseID 1 \
+  --ue-pool 10.250.0.0/24 \
+  --gnb-addr 192.168.70.2 \
+  --app-filter "udp:any:any:allow:100" \
+  --session-mbr-uplink   1000000,1000000,1000000 \
+  --session-mbr-downlink 1000000,1000000,1000000 \
+  --app-mbr-uplink       50000,200000,500000 \
+  --app-mbr-downlink     50000,200000,500000
+```
+
+Validated pfcpsim log:
+
+```text
+Create session idx=0 baseID=1  MBR session(ul=1000000,dl=1000000) app(ul=50000,dl=50000)  kbps
+Create session idx=1 baseID=11 MBR session(ul=1000000,dl=1000000) app(ul=200000,dl=200000) kbps
+Create session idx=2 baseID=21 MBR session(ul=1000000,dl=1000000) app(ul=500000,dl=500000) kbps
+3 sessions were established using 1 as baseID
+```
+
+Validated UPF state:
+
+```text
+pfcp_sessions{node_id="192.168.90.2"} 3
+pdrLookup,        6 rules
+farLookup,        6 rules
+appQERLookup,    12 rules
+sessionQERLookup, 6 rules
+```
+
+## B10. Modify session MBR at runtime
+
+The patched Modify operation accepts the same per-slice MBR arrays. Only the categories that have
+at least one non-empty array are pushed as PFCP `Session Modification Request` with QER Update IEs.
+
+Example, retune slice 11 only at the application level, leaving session-level untouched:
+
+```bash
+sudo docker exec pfcpsim pfcpctl -s localhost:12345 session modify \
+  --count 3 --baseID 1 \
+  --app-filter "udp:any:any:allow:100" \
+  --app-mbr-uplink   50000,100000,500000 \
+  --app-mbr-downlink 50000,100000,500000
+```
+
+Validated pfcpsim log:
+
+```text
+Modify session idx=0 baseID=1  app-level MBR (ul=50000,dl=50000)   kbps
+Modify session idx=1 baseID=11 app-level MBR (ul=100000,dl=100000) kbps
+Modify session idx=2 baseID=21 app-level MBR (ul=500000,dl=500000) kbps
+3 sessions were modified
+```
+
+The absence of `session-level MBR` log lines confirms that the patched Modify path correctly
+preserved the existing session-level QER values, which was the intended behaviour.
+
+## B11. Validation experiment, overload profile
+
+A higher rate TRex profile is used to drive each slice **above its MBR**, so that the BESS policer
+takes effect.
+
+```bash
+cat > /opt/trex/v3.08/automation/exp2/exp2_overload_lat_profile.py <<'EOF'
+from trex_stl_lib.api import *
+from scapy.contrib.gtp import GTP_U_Header
+
+GNB_IP = "192.168.70.2"
+UPF_N3_IP = "192.168.70.1"
+DN_IP = "192.168.80.2"
+PAYLOAD_BYTES = 128
+PPS_PER_SLICE = 50000  # ~70 Mbps per slice in software mode
+
+SLICES = [
+    {"teid": 1,  "ue_ip": "10.250.0.1", "src_port": 10001, "pg_id": 1},
+    {"teid": 11, "ue_ip": "10.250.0.2", "src_port": 10011, "pg_id": 11},
+    {"teid": 21, "ue_ip": "10.250.0.3", "src_port": 10021, "pg_id": 21},
+]
+
+class STLS1(object):
+    def get_streams(self, direction=0, **kwargs):
+        streams = []
+        for s in SLICES:
+            pkt = (
+                Ether()
+                / IP(src=GNB_IP, dst=UPF_N3_IP)
+                / UDP(sport=2152, dport=2152, chksum=0)
+                / GTP_U_Header(teid=s["teid"])
+                / IP(src=s["ue_ip"], dst=DN_IP)
+                / UDP(sport=s["src_port"], dport=5555, chksum=0)
+                / ("X" * PAYLOAD_BYTES)
+            )
+            streams.append(
+                STLStream(
+                    name="ovl_lat_teid_%s" % s["teid"],
+                    packet=STLPktBuilder(pkt=pkt),
+                    mode=STLTXCont(pps=PPS_PER_SLICE),
+                    flow_stats=STLFlowLatencyStats(pg_id=s["pg_id"]),
+                )
+            )
+        return streams
+
+def register():
+    return STLS1()
+EOF
+```
+
+Two profiles are useful in practice:
+
+```text
+exp2_overload_profile.py      STLFlowStats,        higher pps, no --software needed
+exp2_overload_lat_profile.py  STLFlowLatencyStats, requires TRex --software for per-PG RX
+```
+
+In the validated experiment the second one was used because per-slice RX correlation was the goal.
+
+## B12. Run the experiment
+
+UPF host, snapshot before:
+
+```bash
+sudo docker exec bess /opt/bess/bessctl/bessctl show module appQERLookup > /tmp/qer_before.txt
+sudo docker exec bess /opt/bess/bessctl/bessctl show port | grep -A8 enp8s0np0Fast
+```
+
+TRex host, software mode:
+
+```bash
+sudo pkill -f t-rex-64
+sleep 2
+cd /opt/trex/v3.08
+sudo ./t-rex-64 -i --software --no-ofed-check -c 8
+```
+
+In another TRex terminal:
+
+```bash
+cd /opt/trex/v3.08
+sudo ./trex-console
+```
+
+In the TRex console:
+
+```text
+service --port 1
+start -f /opt/trex/v3.08/automation/exp2/exp2_overload_lat_profile.py -p 0 -d 30 --force
+stats -l
+```
+
+UPF host, snapshot after (during or just after the run):
+
+```bash
+sudo docker exec bess /opt/bess/bessctl/bessctl show module appQERLookup > /tmp/qer_after.txt
+sudo docker exec bess /opt/bess/bessctl/bessctl show port | grep -A8 enp8s0np0Fast
+```
+
+## B13. Validated results, overload run, MBRs 50 / 200 / 500 Mbps
+
+A first stress run was executed with a higher pps overload profile (no latency stats) to produce a
+clean macro-level conservation check. Duration ~58 s, ~12 M packets transmitted in total.
+
+### TRex aggregate counters
+
+```text
+Port 0 TX packets: 12,000,003
+Port 1 RX packets:  8,001,304
+Drop:               3,998,699
+oerrors / ierrors:  0 / 0
+```
+
+### BESS appQERLookup deltas
+
+| Output gate | Meaning           | Before    | After     | Delta     |
+|---:|---|---:|---:|---:|
+| 1 | passes to sessionQER (alt path) | 4,920    | 4,923    | +3        |
+| 2 | passes to sessionQER (main path)| 1,921,588| 9,922,882| +8,001,294|
+| 3 | dropped by appQERMeterRed       | 345,800  | 4,344,506| +3,998,706|
+| 4 | appQERLookupFail                | 0        | 0        | 0         |
+| 5 | appQERStatusDrop                | 0        | 0        | 0         |
+
+### BESS port enp8s0np0Fast (N6 output)
+
+```text
+Out/TX before: 1,926,508 packets
+Out/TX after:  9,927,805 packets
+Delta:         8,001,297 packets
+NIC dropped:   0
+```
+
+### Conservation of packets
+
+```text
+TRex TX                                 = 12,000,003
+BESS appQERLookup gate2 + gate3 delta   = 12,000,000
+BESS port enp8s0np0Fast Out/TX delta    =  8,001,297
+TRex RX                                 =  8,001,304
+BESS gate3 delta (policer drop)         =  3,998,706
+TRex aggregate drop                     =  3,998,699
+```
+
+The mismatch of a few packets between counters is consistent with PFCP keepalives and timing of the
+snapshot windows. The macro-level conservation matches: every packet is accounted for either as
+forwarded to N6 or as dropped by the application-level policer, with zero datapath failures.
+
+## B14. Validated results, per-slice latency run, MBRs 50 / 200 / 500 Mbps
+
+A second run executed the latency overload profile with `STLFlowLatencyStats` and TRex `--software`
+mode to obtain per-PG-ID counters. ~50 kpps per slice, ~70 Mbps per slice offered load.
+
+| PG ID | TX pkts | RX pkts | Loss     | Avg latency | Min latency | Max latency | Jitter |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1  | 924,033 | 737,959 | 186,074  | 40.424 ms | 40.421 ms | 42.829 ms | 1 us |
+| 11 | 924,033 | 922,011 | 2,022    | 40.423 ms | 40.421 ms | 41.001 ms | 2 us |
+| 21 | 924,033 | 922,010 | 2,023    | 40.439 ms | 40.421 ms | 43.936 ms | 0 us |
+
+Per-slice errors reported by TRex:
+
+```text
+PG ID 1   Errors 184.05 K
+PG ID 11  Errors      0
+PG ID 21  Errors      0
+```
+
+Interpretation:
+
+```text
+- Slice 1 cap is 50 Mbps. Offered load ~70 Mbps. Roughly 80% of packets pass, 20% are dropped by the policer.
+- Slice 11 cap is 200 Mbps. Offered load ~70 Mbps, well below the cap. All packets pass except for ~0.2% noise.
+- Slice 21 cap is 500 Mbps. Offered load ~70 Mbps. All packets pass except for ~0.2% noise.
+- The latency floor near 40 ms is the same software-instrumented floor observed in the previous DPDK forwarding
+  validation appendix and is not attributable to the BESS or Mellanox datapath.
+```
+
+This confirms that **the policer applies different rate limits per slice**, exactly as configured
+through the patched PFCP control path.
+
+## B15. Validated datapath under per-slice MBR enforcement
+
+```text
+TRex port 0
+  -> UPF Access/N3, enp7s0np0Fast, DPDK PMDPort
+  -> pdrLookup
+  -> gtpuDecap
+  -> appQERLookup
+        gate 2 -> sessionQERLookup -> farLookup -> ... -> N6
+        gate 3 -> appQERMeterRed (Sink, drop above MBR)
+  -> sessionQERLookup
+  -> farLookup
+  -> farMerge / executeFAR
+  -> enp8s0np0Routes
+  -> enp8s0np0DstMAC1070FDC0EF81
+  -> UPF Core/N6, enp8s0np0Fast, DPDK PMDPort
+  -> TRex port 1 RX
+```
+
+## B16. Operational notes
+
+```text
+- MBR values are passed in kbps. 50 Mbps is "50000".
+- The session-level QER (qer_id=0) and the app-level QERs are independent.
+- Setting a low session-level MBR caps the entire session regardless of app rules.
+- Setting a low app-level MBR only caps the matched application traffic for that session.
+- For experimental studies focused on slice differentiation, keep the session-level MBR very high
+  (1 Gbps in this appendix) and vary the app-level MBR per slice.
+- Modify uses PFCP Session Modification Request with QER Update IEs. Session, PDR, FAR, and TEID
+  state are preserved; in-flight packets are not interrupted.
+- The patched Modify only sends QER Update IEs for categories that the caller passes explicitly.
+  Calling modify with only --app-mbr-* will not change session-level MBR, and vice versa.
+- pdrLookupFail, farLookupFail, enp8s0np0bad_route, and NIC drop counters all remained at 0
+  during the validated runs, confirming that the policer is the only source of drops.
+```
+
+## B17. Troubleshooting specific to the patched build
+
+### Build fails on `protoc` step
+
+The patched Dockerfile pins:
+
+```text
+google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
+google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
+```
+
+If a different version is installed locally and the host Go is too old (1.18 or earlier), avoid
+running the build outside Docker. The Dockerfile uses `golang:1.26.2-bookworm` and works regardless
+of the host Go version.
+
+### `pfcpctl session create --help` does not show the new flags
+
+Check that the pfcpsim image used at runtime is `pfcpsim:patched` and not the upstream one:
+
+```bash
+sudo docker inspect --format '{{.Config.Image}}' pfcpsim
+```
+
+### Modify keeps overwriting session-level MBR with the defaults
+
+This was the first-iteration bug. If observed, confirm that the running container was rebuilt from
+the patched source and that the `if updateSessionMBR { ... }` and `if updateAppMBR { ... }` guards
+are present in `internal/pfcpsim/server.go`.
+
+### `appQERMeterRed` Sink shows zero packets at its input gate
+
+The drop counter is reported on the **output gate of `appQERLookup`** (gate 3), not at the input
+of the Sink. Always read the policer drop count from:
+
+```bash
+sudo docker exec bess /opt/bess/bessctl/bessctl show module appQERLookup
+```
+
+and look at the output gate that feeds `appQERMeterRed`.
+
+### Per-PG-ID RX is zero with `STLFlowStats`
+
+`STLFlowStats` relies on a marker that may not be preserved across the GTP-U decap on the validated
+Mellanox + TRex 3.08 combination. For per-slice RX correlation, use `STLFlowLatencyStats` and start
+TRex with `--software`. This is the same constraint already documented in section 12.14 of the main
+README.
+
+## B18. Result summary
+
+```text
+Per-session MBR via PFCP QER:        OK
+Runtime MBR modification:            OK (no session re-establishment)
+Policer drops only the overloaded slice (slice 1, cap 50 Mbps): OK
+Slices below their cap (slices 11 and 21) pass without policer drops: OK
+Datapath conservation (TX = forwarded + policed): OK
+PDR / FAR / route / NIC drop failures: 0
+```
+
+This appendix completes the BESS-UPF DPDK testbed by adding a working, runtime-controllable QoS
+enforcement plane per slice. It establishes the operational and measurement foundation required
+for closed-loop slice control experiments, where an external controller can adjust MBR values in
+response to telemetry without disrupting active sessions.

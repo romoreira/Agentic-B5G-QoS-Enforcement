@@ -1,0 +1,14 @@
+  sessionQERLookup::Qos(2 fields, 10 rules)
+    Per-packet metadata fields:
+      src_iface: read   1 bytes at offset 12
+          fseid: read   8 bytes at offset 16
+    Input gates:
+        0: batches 0           packets 0            appQERLookup:1 ->, appQERLookup:2 ->, appQERLookup:6 ->	
+    Output gates:
+        1: batches 34256       packets 182540       -> 0:farLookup	Track::track0
+        2: batches 100755207   packets 774337382    -> 0:farLookup	Track::track0
+        3: batches 16137530    packets 34093447     -> 0:sessionQERMeterRed	Track::track0
+        4: batches 0           packets 0            -> 0:farLookup	Track::track0
+        5: batches 0           packets 0            -> 0:sessionQERStatusDrop	Track::track0
+        6: batches 0           packets 0            -> 0:farLookup	Track::track0
+    Deadends: 0           

@@ -1,0 +1,5 @@
+{
+  "cmd": "sudo docker exec pfcpsim pfcpctl -s localhost:12345 session modify --count 5 --baseID 1 --app-filter udp:any:any:allow:100 --app-mbr-uplink 200000,200000,150000,150000,100000 --app-mbr-downlink 200000,200000,150000,150000,100000",
+  "returncode": 0,
+  "output": "2026-05-11T19:44:23.431Z\tINFO\tcommands/sessions.go:229\t5 sessions were modified\t{\"component\": \"LIB\", \"category\": \"Pfcpsim\"}\n"
+}

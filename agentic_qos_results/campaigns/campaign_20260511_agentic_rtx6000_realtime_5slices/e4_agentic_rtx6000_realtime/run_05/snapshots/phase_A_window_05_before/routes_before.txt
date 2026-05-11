@@ -1,0 +1,7 @@
+  enp8s0np0Routes::IPLookup()
+    Input gates:
+        0: batches 0           packets 0            executeFAR:1 ->	
+    Output gates:
+        0: batches 90422163    packets 698566807    -> 0:enp8s0np0DstMAC1070FDC0EF81	Track::track0
+      8191: batches 0           packets 0            -> 0:enp8s0np0bad_route	Track::track0
+    Deadends: 0           

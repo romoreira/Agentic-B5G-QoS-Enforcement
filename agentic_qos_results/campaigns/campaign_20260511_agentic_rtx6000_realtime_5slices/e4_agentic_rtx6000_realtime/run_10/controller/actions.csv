@@ -1,0 +1,13 @@
+timestamp_utc,phase,window_index,old_mbr_kbps,new_mbr_kbps,reason,tool_returncode
+2026-05-11T22:33:40.577090Z,B,1,"200000,200000,150000,150000,100000","200000,200000,150000,150000,70000","real app QER policing in bronze burst, only S5 may be reduced",0
+2026-05-11T22:34:26.372904Z,B,2,"200000,200000,150000,150000,70000","200000,200000,150000,150000,60000","real app QER policing in bronze burst, only S5 may be reduced",0
+2026-05-11T22:35:12.150277Z,B,3,"200000,200000,150000,150000,60000","200000,200000,150000,150000,70000","real app QER policing in bronze burst, only S5 may be reduced",0
+2026-05-11T22:35:57.993294Z,B,4,"200000,200000,150000,150000,70000","200000,200000,150000,150000,60000","real app QER policing in bronze burst, only S5 may be reduced",0
+2026-05-11T22:36:43.775091Z,B,5,"200000,200000,150000,150000,60000","200000,200000,150000,150000,70000","real app QER policing in bronze burst, only S5 may be reduced",0
+2026-05-11T22:37:29.503837Z,B,6,"200000,200000,150000,150000,70000","200000,200000,150000,150000,60000","real app QER policing in bronze burst, only S5 may be reduced",0
+2026-05-11T22:38:15.755022Z,C,1,"200000,200000,150000,150000,60000","200000,200000,110000,110000,100000","real app QER policing in silver flash crowd, preserve Gold and adjust Silver",0
+2026-05-11T22:39:01.601493Z,C,2,"200000,200000,110000,110000,100000","200000,200000,120000,120000,100000","real app QER policing in silver flash crowd, preserve Gold and adjust Silver",0
+2026-05-11T22:39:47.334636Z,C,3,"200000,200000,120000,120000,100000","200000,200000,110000,110000,100000","real app QER policing in silver flash crowd, preserve Gold and adjust Silver",0
+2026-05-11T22:40:33.223757Z,C,4,"200000,200000,110000,110000,100000","200000,200000,120000,120000,100000","real app QER policing in silver flash crowd, preserve Gold and adjust Silver",0
+2026-05-11T22:41:19.368289Z,C,5,"200000,200000,120000,120000,100000","200000,200000,110000,110000,100000","real app QER policing in silver flash crowd, preserve Gold and adjust Silver",0
+2026-05-11T22:42:05.176266Z,C,6,"200000,200000,110000,110000,100000","200000,200000,120000,120000,100000","real app QER policing in silver flash crowd, preserve Gold and adjust Silver",0

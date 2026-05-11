@@ -1,0 +1,419 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse, csv, json, re, subprocess, time, urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+PHASES = ["A", "B", "C", "D"]
+INITIAL_MBR = [200000, 200000, 150000, 150000, 100000]
+CAPACITY_LIMIT = 800000
+SLICE_ORDER = ["S1", "S2", "S3", "S4", "S5"]
+
+def now():
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+def log(msg: str):
+    print(f"[{now()}] {msg}", flush=True)
+
+def run(cmd, timeout=None, cwd=None, shell=False):
+    return subprocess.run(cmd, shell=shell, text=True, stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT, timeout=timeout,
+                          cwd=str(cwd) if cwd else None)
+
+def sh(cmd, timeout=None, cwd=None):
+    return run(cmd, timeout=timeout, cwd=cwd, shell=True)
+
+def ssh(upf_ssh: str, remote_cmd: str, timeout=40):
+    return run(["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=accept-new",
+                "-o", "ConnectTimeout=10", upf_ssh, remote_cmd], timeout=timeout)
+
+def write(path: Path, text: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8", errors="replace")
+
+def append_jsonl(path: Path, obj: dict):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(obj, ensure_ascii=False) + "\n")
+
+def num(s: str) -> float:
+    return float(s.strip().replace(",", ""))
+
+def intnum(s: str) -> int:
+    return int(num(s))
+
+def parse_metrics(path: Path) -> dict[str, float]:
+    out = {}
+    if not path.exists():
+        return out
+    lr = re.compile(r'^([a-zA-Z_:][a-zA-Z0-9_:]*)\{([^}]*)\}\s+([0-9eE+\-.]+)$')
+    lab = re.compile(r'([a-zA-Z_][a-zA-Z0-9_]*)="([^"]*)"')
+    for line in path.read_text(errors="replace").splitlines():
+        m = lr.match(line.strip())
+        if not m:
+            continue
+        name, labels_s, val_s = m.groups()
+        labels = dict(lab.findall(labels_s))
+        val = float(val_s)
+        if name == "pfcp_sessions":
+            out["pfcp_sessions"] = val
+        elif name == "upf_packets_count":
+            out[f"upf_packets.{labels.get('dir')}.{labels.get('iface')}"] = val
+        elif name == "upf_bytes_count":
+            out[f"upf_bytes.{labels.get('dir')}.{labels.get('iface')}"] = val
+        elif name == "upf_dropped_count":
+            out[f"upf_dropped.{labels.get('dir')}.{labels.get('iface')}"] = val
+    return out
+
+def parse_module(path: Path) -> dict[str, int]:
+    out = {}
+    if not path.exists():
+        return out
+    section = None
+    gr = re.compile(r'^\s*(\d+):\s+batches\s+([\d,]+)\s+packets\s+([\d,]+)\s*(?:->\s*\d*:?\s*([A-Za-z0-9_]+))?')
+    for line in path.read_text(errors="replace").splitlines():
+        if "Input gates:" in line:
+            section = "in"; continue
+        if "Output gates:" in line:
+            section = "out"; continue
+        if "Deadends:" in line:
+            section = None; continue
+        if section != "out":
+            continue
+        m = gr.match(line)
+        if m:
+            gate, _, packets, target = m.groups()
+            out[f"gate_{gate}.{target or 'gate_'+gate}"] = intnum(packets)
+    return out
+
+def parse_ports(path: Path) -> dict[str, int]:
+    out = {}
+    if not path.exists():
+        return out
+    current = None
+    last = None
+    pr = re.compile(r'^\s*([A-Za-z0-9_]+)\s+Driver\s+')
+    pk = re.compile(r'(Inc/RX|Out/TX)\s+packets:\s+([\d,]+)\s+bytes:\s+([\d,]+)')
+    dr = re.compile(r'dropped:\s+([\d,]+)')
+    for line in path.read_text(errors="replace").splitlines():
+        m = pr.match(line)
+        if m:
+            current = m.group(1); last = None; continue
+        if not current:
+            continue
+        m = pk.search(line)
+        if m:
+            raw, packets, bytes_ = m.groups()
+            last = "rx" if raw == "Inc/RX" else "tx"
+            out[f"port.{current}.{last}.packets"] = intnum(packets)
+            out[f"port.{current}.{last}.bytes"] = intnum(bytes_)
+            continue
+        m = dr.search(line)
+        if m and last:
+            out[f"port.{current}.{last}.dropped"] = intnum(m.group(1))
+    return out
+
+def collect_snapshot(upf_ssh: str, out_dir: Path, tag: str) -> dict[str, Any]:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    write(out_dir / f"timestamp_{tag}.txt", now() + "\n")
+    cmds = {
+        f"upf_metrics_{tag}.txt": "curl -s http://127.0.0.1:8080/metrics",
+        f"pdrLookup_{tag}.txt": "sudo docker exec bess /opt/bess/bessctl/bessctl show module pdrLookup",
+        f"gtpuDecap_{tag}.txt": "sudo docker exec bess /opt/bess/bessctl/bessctl show module gtpuDecap",
+        f"appQERLookup_{tag}.txt": "sudo docker exec bess /opt/bess/bessctl/bessctl show module appQERLookup",
+        f"sessionQERLookup_{tag}.txt": "sudo docker exec bess /opt/bess/bessctl/bessctl show module sessionQERLookup",
+        f"farLookup_{tag}.txt": "sudo docker exec bess /opt/bess/bessctl/bessctl show module farLookup",
+        f"routes_{tag}.txt": "sudo docker exec bess /opt/bess/bessctl/bessctl show module enp8s0np0Routes",
+        f"ports_{tag}.txt": "sudo docker exec bess /opt/bess/bessctl/bessctl show port",
+        f"docker_ps_{tag}.txt": "sudo docker ps",
+    }
+    for fn, cmd in cmds.items():
+        r = ssh(upf_ssh, cmd)
+        write(out_dir / fn, r.stdout)
+        if r.returncode != 0:
+            raise RuntimeError(f"remote command failed: {cmd}\n{r.stdout}")
+    return {
+        "metrics": parse_metrics(out_dir / f"upf_metrics_{tag}.txt"),
+        "modules": {
+            "pdrLookup": parse_module(out_dir / f"pdrLookup_{tag}.txt"),
+            "gtpuDecap": parse_module(out_dir / f"gtpuDecap_{tag}.txt"),
+            "appQERLookup": parse_module(out_dir / f"appQERLookup_{tag}.txt"),
+            "sessionQERLookup": parse_module(out_dir / f"sessionQERLookup_{tag}.txt"),
+            "farLookup": parse_module(out_dir / f"farLookup_{tag}.txt"),
+            "routes": parse_module(out_dir / f"routes_{tag}.txt"),
+        },
+        "ports": parse_ports(out_dir / f"ports_{tag}.txt"),
+    }
+
+def md(b, a, k): return a["metrics"].get(k, 0.0) - b["metrics"].get(k, 0.0)
+def pd(b, a, k): return int(a["ports"].get(k, 0) - b["ports"].get(k, 0))
+def mod_delta(b, a, module, contains):
+    bm = b["modules"].get(module, {})
+    am = a["modules"].get(module, {})
+    return sum(v for k, v in am.items() if contains in k) - sum(v for k, v in bm.items() if contains in k)
+
+def mbps(byte_delta, seconds):
+    return (byte_delta * 8.0) / seconds / 1_000_000.0 if seconds > 0 else 0.0
+
+def telemetry(phase, window_index, current_mbr, before, after, window_sec):
+    access_bytes = md(before, after, "upf_bytes.rx.Access")
+    core_bytes = md(before, after, "upf_bytes.tx.Core")
+    app_pass = mod_delta(before, after, "appQERLookup", "sessionQERLookup")
+    app_red = mod_delta(before, after, "appQERLookup", "appQERMeterRed")
+    return {
+        "timestamp_utc": now(), "phase": phase, "window_index": window_index,
+        "window_sec": window_sec, "slice_order": SLICE_ORDER,
+        "current_mbr_kbps": current_mbr, "capacity_limit_kbps": CAPACITY_LIMIT,
+        "access_rx_packets_delta": md(before, after, "upf_packets.rx.Access"),
+        "core_tx_packets_delta": md(before, after, "upf_packets.tx.Core"),
+        "access_rx_bytes_delta": access_bytes, "core_tx_bytes_delta": core_bytes,
+        "offered_mbps": mbps(access_bytes, window_sec),
+        "delivered_mbps": mbps(core_bytes, window_sec),
+        "pdr_to_gtpu_delta": mod_delta(before, after, "pdrLookup", "gtpuDecap"),
+        "pdr_fail_delta": mod_delta(before, after, "pdrLookup", "pdrLookupFail"),
+        "gtpu_decap_delta": mod_delta(before, after, "gtpuDecap", "appQERLookup"),
+        "app_qer_pass_delta": app_pass,
+        "app_qer_meter_red_delta": app_red,
+        "app_qer_fail_delta": mod_delta(before, after, "appQERLookup", "appQERLookupFail"),
+        "session_qer_meter_red_delta": mod_delta(before, after, "sessionQERLookup", "sessionQERMeterRed"),
+        "far_forward_delta": mod_delta(before, after, "farLookup", "farMerge"),
+        "far_fail_delta": mod_delta(before, after, "farLookup", "farLookupFail"),
+        "route_forward_delta": mod_delta(before, after, "routes", "DstMAC"),
+        "bad_route_delta": mod_delta(before, after, "routes", "bad_route"),
+        "n3_rx_packets_delta": pd(before, after, "port.enp7s0np0Fast.rx.packets"),
+        "n6_tx_packets_delta": pd(before, after, "port.enp8s0np0Fast.tx.packets"),
+        "n3_rx_dropped_delta": pd(before, after, "port.enp7s0np0Fast.rx.dropped"),
+        "n6_tx_dropped_delta": pd(before, after, "port.enp8s0np0Fast.tx.dropped"),
+        "pfcp_sessions_before": before["metrics"].get("pfcp_sessions"),
+        "pfcp_sessions_after": after["metrics"].get("pfcp_sessions"),
+        "policing_ratio": app_red / max(app_red + app_pass, 1),
+    }
+
+def unique(vs):
+    out, seen = [], set()
+    for v in vs:
+        t = tuple(v)
+        if t not in seen:
+            seen.add(t); out.append(v)
+    return out
+
+def candidates(phase, current, tel):
+    app_drop = int(tel.get("app_qer_meter_red_delta", 0))
+    if phase == "A":
+        return unique([current, INITIAL_MBR]), "steady state, prefer initial vector"
+    if phase == "B":
+        if app_drop > 0:
+            return unique([current, [200000,200000,150000,150000,70000], [200000,200000,150000,150000,60000], [200000,200000,150000,150000,50000]]), "real app QER policing in bronze burst, only S5 may be reduced"
+        return unique([current]), "no app QER policing observed"
+    if phase == "C":
+        if app_drop > 0:
+            return unique([current, [200000,200000,120000,120000,100000], [200000,200000,110000,110000,100000], [200000,200000,100000,100000,100000]]), "real app QER policing in silver flash crowd, preserve Gold and adjust Silver"
+        return unique([current]), "no app QER policing observed"
+    if phase == "D":
+        return unique([current, INITIAL_MBR]), "recovery phase, prefer restoring initial vector"
+    return unique([current]), "unknown phase"
+
+def extract_json(text):
+    text = text.strip()
+    m = re.search(r"```(?:json)?\s*(.*?)\s*```", text, flags=re.DOTALL | re.IGNORECASE)
+    if m: text = m.group(1).strip()
+    s, e = text.find("{"), text.rfind("}")
+    if s != -1 and e != -1 and e > s:
+        text = text[s:e+1]
+    return json.loads(text)
+
+def validate_vector(mbr):
+    if not isinstance(mbr, list) or len(mbr) != 5: raise ValueError("mbr_kbps must be a list of five values")
+    if not all(isinstance(x, int) for x in mbr): raise ValueError("MBR values must be integers")
+    if not all(x > 0 and x % 10000 == 0 for x in mbr): raise ValueError("MBR values must be positive multiples of 10000")
+    if sum(mbr) > CAPACITY_LIMIT: raise ValueError(f"capacity exceeded, sum={sum(mbr)}")
+    return mbr
+
+def validate_decision(parsed, current, cand):
+    action = parsed.get("action")
+    mbr = validate_vector(parsed.get("mbr_kbps"))
+    if action not in ["keep", "modify_mbr"]: raise ValueError("invalid action")
+    if mbr not in cand: raise ValueError(f"mbr not in candidates, mbr={mbr}, candidates={cand}")
+    if action == "keep" and mbr != current: raise ValueError("keep requires current vector")
+    if action == "modify_mbr" and mbr == current: raise ValueError("modify_mbr requires a changed vector")
+    return {"action": action, "mbr_kbps": mbr, "reason": str(parsed.get("reason", ""))[:500], "expected_effect": str(parsed.get("expected_effect", ""))[:500]}
+
+def call_llm(base_url, model, tel, cand, reason, timeout, max_tokens):
+    prompt_tel = dict(tel)
+    prompt_tel["candidate_mbr_vectors"] = cand
+    prompt_tel["candidate_reason"] = reason
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": "You are a policy constrained B5G UPF QoS controller. Choose exactly one vector from candidate_mbr_vectors. Do not invent a new vector. Use real telemetry from the last window. Protect Gold, then Silver, then Bronze. If app_qer_meter_red_delta is zero and there are no datapath errors, prefer keep. If phase is B and app_qer_meter_red_delta is positive, choose a candidate that reduces only S5. If phase is C and app_qer_meter_red_delta is positive, choose a candidate that preserves Gold and adjusts Silver. If phase is D, prefer restoring the initial vector. Return only valid JSON, no markdown."},
+            {"role": "user", "content": "Choose the next MBR vector. Return exactly this JSON schema: {\"action\":\"keep or modify_mbr\",\"mbr_kbps\":[int,int,int,int,int],\"reason\":\"short reason based on real telemetry\",\"expected_effect\":\"short expected effect\"}. Telemetry: " + json.dumps(prompt_tel)},
+        ],
+        "temperature": 0,
+        "max_tokens": max_tokens,
+    }
+    req = urllib.request.Request(f"{base_url}/chat/completions", data=json.dumps(payload).encode(), headers={"Content-Type":"application/json"}, method="POST")
+    t0 = time.time()
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        raw = resp.read().decode()
+    latency = (time.time() - t0) * 1000.0
+    data = json.loads(raw)
+    content = data["choices"][0]["message"]["content"]
+    return extract_json(content), content, latency, data.get("usage", {})
+
+def fallback(current, reason):
+    return {"action":"keep", "mbr_kbps":current, "reason":f"fallback keep current, {reason}", "expected_effect":"preserve current UPF configuration"}
+
+def apply_mbr(mbr):
+    mbr_csv = ",".join(map(str, mbr))
+    cmd = ["sudo", "docker", "exec", "pfcpsim", "pfcpctl", "-s", "localhost:12345", "session", "modify", "--count", "5", "--baseID", "1", "--app-filter", "udp:any:any:allow:100", "--app-mbr-uplink", mbr_csv, "--app-mbr-downlink", mbr_csv]
+    r = run(cmd, timeout=60)
+    return {"cmd":" ".join(cmd), "returncode":r.returncode, "output":r.stdout}
+
+def run_trex_window(trex_dir, profile, phase, window_sec, scale, out_file):
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    start = f"""sudo ./trex-console <<'EOF'
+service --port 1
+start --force -f {profile} -p 0 -d {window_sec} -t phase={phase},scale={scale},latency=0
+quit
+EOF
+"""
+    with out_file.open("a") as f:
+        f.write(f"\n===== START phase={phase} at {now()} =====\n")
+        f.write(sh(start, timeout=30, cwd=trex_dir).stdout)
+    time.sleep(window_sec + 2)
+    stats = """sudo ./trex-console <<'EOF'
+stats
+quit
+EOF
+"""
+    with out_file.open("a") as f:
+        f.write(f"\n===== STATS phase={phase} at {now()} =====\n")
+        f.write(sh(stats, timeout=30, cwd=trex_dir).stdout)
+
+def preflight(args):
+    log("Running preflight checks")
+    if not args.trex_profile.exists():
+        raise SystemExit(f"missing TRex profile: {args.trex_profile}")
+    try:
+        with urllib.request.urlopen(f"{args.vllm_base_url}/models", timeout=10) as resp:
+            models = resp.read().decode()
+        if args.vllm_model not in models:
+            log("WARNING model name not found in /models output")
+    except Exception as e:
+        raise SystemExit(f"vLLM check failed: {e}")
+    if sh("sudo docker ps | grep pfcpsim", timeout=15).returncode != 0:
+        raise SystemExit("pfcpsim container not running")
+    r = ssh(args.upf_ssh, "curl -s http://127.0.0.1:8080/metrics | grep pfcp_sessions", timeout=20)
+    if r.returncode != 0 or " 5" not in r.stdout:
+        raise SystemExit(f"PFCP sessions check failed:\n{r.stdout}")
+    tr = sh("cd /opt/trex/v3.08 && sudo ./trex-console <<'EOF'\nstats\nquit\nEOF\n", timeout=30)
+    if tr.returncode != 0 or "Port Statistics" not in tr.stdout:
+        raise SystemExit(f"TRex console check failed:\n{tr.stdout}")
+    log("Preflight OK")
+
+def write_metadata(run_dir, args):
+    meta = run_dir / "metadata"
+    meta.mkdir(parents=True, exist_ok=True)
+    data = {"created_at_utc": now(), "experiment": args.experiment, "run": args.run_name, "controller":"policy_constrained_llm_realtime", "vllm_base_url":args.vllm_base_url, "vllm_model":args.vllm_model, "upf_ssh":args.upf_ssh, "window_sec":args.window_sec, "windows_per_phase":args.windows_per_phase, "initial_mbr_kbps":INITIAL_MBR, "capacity_limit_kbps":CAPACITY_LIMIT, "trex_profile":str(args.trex_profile), "scale":args.scale}
+    write(meta / "run_info.json", json.dumps(data, indent=2) + "\n")
+    write(meta / "slice_config.csv", "slice,tier,teid,ue_ip,initial_cap_mbps\nS1,Gold,1,10.250.0.1,200\nS2,Gold,11,10.250.0.2,200\nS3,Silver,21,10.250.0.3,150\nS4,Silver,31,10.250.0.4,150\nS5,Bronze,41,10.250.0.5,100\n")
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--root", type=Path, default=Path.home()/"agentic_qos_results/campaigns/campaign_20260511_agentic_rtx6000_realtime_5slices")
+    ap.add_argument("--experiment", default="e4_agentic_rtx6000_realtime")
+    ap.add_argument("--run-name", default="run_01")
+    ap.add_argument("--upf-ssh", default="ubuntu@192.168.90.1")
+    ap.add_argument("--vllm-base-url", default="http://127.0.0.1:18000/v1")
+    ap.add_argument("--vllm-model", default="Qwen/Qwen2.5-7B-Instruct")
+    ap.add_argument("--trex-dir", type=Path, default=Path("/opt/trex/v3.08"))
+    ap.add_argument("--trex-profile", type=Path, default=Path("/opt/trex/v3.08/automation/exp2/agentic_5slice_phase_profile.py"))
+    ap.add_argument("--window-sec", type=int, default=10)
+    ap.add_argument("--windows-per-phase", type=int, default=6)
+    ap.add_argument("--scale", type=float, default=1.0)
+    ap.add_argument("--llm-timeout", type=int, default=60)
+    ap.add_argument("--llm-max-tokens", type=int, default=300)
+    ap.add_argument("--skip-preflight", action="store_true")
+    args = ap.parse_args()
+
+    run_dir = args.root / args.experiment / args.run_name
+    if run_dir.exists():
+        raise SystemExit(f"Run directory already exists, remove or move it first: {run_dir}")
+    for d in ["controller", "trex", "snapshots", "logs", "metadata"]:
+        (run_dir/d).mkdir(parents=True, exist_ok=True)
+    write_metadata(run_dir, args)
+    if not args.skip_preflight:
+        preflight(args)
+
+    decisions_path = run_dir/"controller/decisions.jsonl"
+    telemetry_path = run_dir/"controller/telemetry_windows.jsonl"
+    actions_path = run_dir/"controller/actions.csv"
+    with actions_path.open("w", newline="") as f:
+        csv.writer(f).writerow(["timestamp_utc", "phase", "window_index", "old_mbr_kbps", "new_mbr_kbps", "reason", "tool_returncode"])
+
+    log("Resetting initial MBR")
+    reset = apply_mbr(INITIAL_MBR)
+    write(run_dir/"logs/initial_reset.txt", json.dumps(reset, indent=2)+"\n")
+    if reset["returncode"] != 0:
+        raise SystemExit(f"Initial reset failed: {reset}")
+
+    current = list(INITIAL_MBR)
+    totals = {"decisions":0, "actions":0, "fallbacks":0, "tool_failures":0}
+
+    for phase in PHASES:
+        log(f"Starting phase {phase}")
+        for w in range(1, args.windows_per_phase+1):
+            label = f"phase_{phase}_window_{w:02d}"
+            log(f"Window {label}, current_mbr={current}")
+            before = collect_snapshot(args.upf_ssh, run_dir/"snapshots"/f"{label}_before", "before")
+            run_trex_window(args.trex_dir, args.trex_profile, phase, args.window_sec, args.scale, run_dir/"trex"/f"{label}_console.txt")
+            after = collect_snapshot(args.upf_ssh, run_dir/"snapshots"/f"{label}_after", "after")
+            tel = telemetry(phase, w, current, before, after, args.window_sec)
+            append_jsonl(telemetry_path, tel)
+            cand, reason = candidates(phase, current, tel)
+
+            raw, usage, latency, error = None, {}, None, None
+            fallback_used = False
+            try:
+                parsed, raw, latency, usage = call_llm(args.vllm_base_url, args.vllm_model, tel, cand, reason, args.llm_timeout, args.llm_max_tokens)
+                decision = validate_decision(parsed, current, cand)
+            except Exception as e:
+                fallback_used = True
+                error = str(e)
+                totals["fallbacks"] += 1
+                decision = fallback(current, error)
+
+            old = list(current)
+            apply_result = None
+            if decision["mbr_kbps"] != current:
+                apply_result = apply_mbr(decision["mbr_kbps"])
+                if apply_result["returncode"] == 0:
+                    current = list(decision["mbr_kbps"])
+                    totals["actions"] += 1
+                    with actions_path.open("a", newline="") as f:
+                        csv.writer(f).writerow([now(), phase, w, ",".join(map(str, old)), ",".join(map(str, current)), decision.get("reason", ""), 0])
+                else:
+                    totals["tool_failures"] += 1
+
+            totals["decisions"] += 1
+            rec = {"timestamp_utc":now(), "experiment":args.experiment, "run":args.run_name, "phase":phase, "window_index":w, "model":args.vllm_model, "telemetry":tel, "candidate_mbr_vectors":cand, "candidate_reason":reason, "raw_content":raw, "decision":decision, "decision_latency_ms":latency, "prompt_tokens":usage.get("prompt_tokens"), "completion_tokens":usage.get("completion_tokens"), "total_tokens":usage.get("total_tokens"), "fallback_used":fallback_used, "decision_error":error, "old_mbr_kbps":old, "new_mbr_kbps":current, "apply_result":apply_result}
+            append_jsonl(decisions_path, rec)
+            log(f"Decision phase={phase} window={w} action={decision['action']} old={old} new={current} fallback={fallback_used}")
+
+    if current != INITIAL_MBR:
+        log("Final reset to initial MBR")
+        final = apply_mbr(INITIAL_MBR)
+        write(run_dir/"logs/final_reset.txt", json.dumps(final, indent=2)+"\n")
+        if final["returncode"] == 0: current = list(INITIAL_MBR)
+
+    summary = {"timestamp_utc":now(), "experiment":args.experiment, "run":args.run_name, "total_decisions":totals["decisions"], "total_actions":totals["actions"], "total_fallbacks":totals["fallbacks"], "total_tool_failures":totals["tool_failures"], "final_mbr_kbps":current, "window_sec":args.window_sec, "windows_per_phase":args.windows_per_phase, "phases":PHASES}
+    write(run_dir/"controller/run_summary.json", json.dumps(summary, indent=2)+"\n")
+    write(run_dir/"logs/pfcpsim_logs_tail.txt", sh("sudo docker logs pfcpsim --tail 200", timeout=30).stdout)
+    log(f"Finished run. Output directory: {run_dir}")
+    log(json.dumps(summary, indent=2))
+
+if __name__ == "__main__":
+    main()
+

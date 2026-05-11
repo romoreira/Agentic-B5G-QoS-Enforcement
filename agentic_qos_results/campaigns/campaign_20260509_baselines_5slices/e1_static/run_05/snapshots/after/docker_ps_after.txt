@@ -1,0 +1,4 @@
+CONTAINER ID   IMAGE                     COMMAND                  CREATED          STATUS          PORTS     NAMES
+ac6cabf4d4cb   upf-bess:2.4.2-dev-mlx5   "python3 /route_cont…"   35 minutes ago   Up 35 minutes             bess-routectl
+b4bf5adcce50   upf-pfcp:2.4.2-dev        "/bin/pfcpiface -con…"   36 minutes ago   Up 36 minutes             pfcpiface
+6af2563c7a00   upf-bess:2.4.2-dev-mlx5   "bessd -f -grpc-url=…"   36 minutes ago   Up 36 minutes             bess

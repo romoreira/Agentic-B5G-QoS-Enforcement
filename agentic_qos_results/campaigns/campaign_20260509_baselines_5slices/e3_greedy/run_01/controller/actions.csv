@@ -1,0 +1,4 @@
+timestamp_utc,phase,controller,old_mbr_kbps,new_mbr_kbps,reason
+2026-05-11T15:08:03Z,B,e3_greedy,"200000,200000,150000,150000,100000","180000,180000,140000,140000,160000","greedy baseline reallocates capacity toward overloaded S5"
+2026-05-11T15:09:27Z,C,e3_greedy,"180000,180000,140000,140000,160000","170000,170000,180000,180000,100000","greedy baseline reallocates capacity toward S3 and S4"
+2026-05-11T15:10:51Z,D,e3_greedy,"current","200000,200000,150000,150000,100000","recovery restores initial MBRs"

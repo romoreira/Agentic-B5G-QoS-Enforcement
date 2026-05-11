@@ -1,0 +1,5 @@
+phase,duration_s,description
+A,60,steady load below cap
+B,60,bronze burst on S5
+C,60,flash crowd on S3 and S4
+D,60,recovery

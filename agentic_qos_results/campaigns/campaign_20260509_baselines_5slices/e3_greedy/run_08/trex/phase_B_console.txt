@@ -1,0 +1,125 @@
+============================================================
+TRex phase B
+Started at 2026-05-11T15:52:28Z
+Duration requested: 60s
+Profile: /opt/trex/v3.08/automation/exp2/agentic_5slice_phase_profile.py
+Scale: 1.0
+============================================================
+
+
+Using 'python3' as Python interpeter
+
+
+Connecting to RPC server on localhost:4501                   [SUCCESS]
+
+
+Connecting to publisher server on localhost:4500             [SUCCESS]
+
+
+Acquiring ports [0, 1]:                                      [SUCCESS]
+
+
+Server Info:
+
+Server version:   v3.08 @ STL
+Server mode:      Stateless
+Server CPU:       8 x AMD EPYC 7532 32-Core Processor
+Ports count:      2 x 25Gbps @ MT27800 Family [ConnectX-5]	
+
+-=TRex Console v3.0=-
+
+Type 'help' or '?' for supported actions
+
+trex(service: 1)>
+Enabling service mode on port(s): [1]                        [SUCCESS]
+
+1.97 [ms]
+
+trex(service: 1)>
+Removing all streams from port(s) [0._]:                     [SUCCESS]
+
+
+Attaching 5 streams to port(s) [0._]:                        [SUCCESS]
+
+
+Starting traffic on port(s) [0._]:                           [SUCCESS]
+
+27.45 [ms]
+
+trex(service: 1)>Shutting down RPC client
+
+
+Traffic started. Sleeping for 60s before collecting stats.
+
+============================================================
+Stats after phase B
+Collected at 2026-05-11T15:53:32Z
+============================================================
+
+
+Using 'python3' as Python interpeter
+
+
+Connecting to RPC server on localhost:4501                   [SUCCESS]
+
+
+Connecting to publisher server on localhost:4500             [SUCCESS]
+
+
+Acquiring ports [0, 1]:                                      [SUCCESS]
+
+
+Server Info:
+
+Server version:   v3.08 @ STL
+Server mode:      Stateless
+Server CPU:       8 x AMD EPYC 7532 32-Core Processor
+Ports count:      2 x 25Gbps @ MT27800 Family [ConnectX-5]	
+
+-=TRex Console v3.0=-
+
+Type 'help' or '?' for supported actions
+
+trex(service: 1)>Global Statistics
+
+connection   : localhost, Port 4501                       total_tx_L2  : 147.93 Mbps                    
+version      : STL @ v3.08                                total_tx_L1  : 162.02 Mbps                    
+cpu_util.    : 0.11% @ 8 cores (8 per dual port)          total_rx     : 91.18 Mbps                     
+rx_cpu_util. : 3.31% / 65.46 Kpps                         total_pps    : 88.06 Kpps                     
+async_util.  : 0% / 0 bps                                 drop_rate    : 56.76 Mbps                     
+total_cps.   : 0 cps                                      queue_full   : 0 pkts                         
+
+Port Statistics
+
+   port    |         0         |         1         |       total       
+-----------+-------------------+-------------------+------------------
+owner      |              root |              root |                   
+link       |                UP |                UP |                   
+state      |              IDLE |              IDLE |                   
+speed      |           25 Gb/s |           25 Gb/s |                   
+CPU util.  |              0.0% |              0.0% |                   
+--         |                   |                   |                   
+Tx bps L2  |       147.93 Mbps |             0 bps |       147.93 Mbps 
+Tx bps L1  |       162.02 Mbps |             0 bps |       162.02 Mbps 
+Tx pps     |        88.06 Kpps |             0 pps |        88.06 Kpps 
+Line Util. |            0.65 % |               0 % |                   
+---        |                   |                   |                   
+Rx bps     |        154.44 bps |        91.18 Mbps |        91.18 Mbps 
+Rx pps     |          0.12 pps |         65.5 Kpps |         65.5 Kpps 
+----       |                   |                   |                   
+opackets   |                 0 |                 0 |                 0 
+ipackets   |                 0 |                 0 |                 0 
+obytes     |                 0 |                 0 |                 0 
+ibytes     |                 0 |                 0 |                 0 
+tx-pkts    |            0 pkts |            0 pkts |            0 pkts 
+rx-pkts    |            0 pkts |            0 pkts |            0 pkts 
+tx-bytes   |               0 B |               0 B |               0 B 
+rx-bytes   |               0 B |               0 B |               0 B 
+-----      |                   |                   |                   
+oerrors    |                 0 |                 0 |                 0 
+ierrors    |                 0 |                 0 |                 0 
+
+trex(service: 1)>Shutting down RPC client
+
+
+Finished at 2026-05-11T15:53:32Z

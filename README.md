@@ -2986,3 +2986,214 @@ This appendix completes the BESS-UPF DPDK testbed by adding a working, runtime-c
 enforcement plane per slice. It establishes the operational and measurement foundation required
 for closed-loop slice control experiments, where an external controller can adjust MBR values in
 response to telemetry without disrupting active sessions.
+
+
+# C Experiments
+
+Documento de planejamento e calibração da contribuição. Define hipóteses,
+experimentos, baselines, cenário, métricas e conclusões esperadas para a
+proposta de controlador agentic baseado em LLM local sobre o testbed
+BESS-UPF DPDK validado.
+
+Cinco slices são adotados como configuração padrão.
+
+---
+
+## 1. Hipótese central
+
+> Um controlador agentic baseado em LLM local, instrumentado com
+> telemetria multicamada do UPF e raciocínio explícito por etapa, adapta
+> políticas de QoS enforcement em B5G UPF sob mudanças de regime de
+> tráfego sem retreinamento, com aderência a SLA comparável ou superior
+> a controladores clássicos, com decisões auditáveis.
+
+A hipótese se decompõe em três sub-hipóteses verificáveis:
+
+| ID | Sub-hipótese | Verificada por |
+|---|---|---|
+| H1 | Adaptação ativa por LLM supera políticas estáticas e reativas simples sob mudança de regime | E1, E2, E3 vs E4 |
+| H2 | A capacidade de raciocínio do modelo influencia a qualidade das decisões de QoS | E5 (varredura entre modelos) |
+| H3 | Reasoning explícito por etapa é interpretável e correlaciona com qualidade de decisão | E7 (ablation) + análise de traces |
+
+---
+
+## 2. Configuração de slices
+
+Cinco slices com criticidade assimétrica para criar tensão real de decisão.
+
+| Slice | Tier | TEID | UE IP | Cap inicial (Mbps) | SLA loss máx | SLA throughput mín |
+|---|---|---|---|---|---|---|
+| S1 | Gold | 1  | 10.250.0.1 | 200 | 0.1% | 150 Mbps |
+| S2 | Gold | 11 | 10.250.0.2 | 200 | 0.1% | 150 Mbps |
+| S3 | Silver | 21 | 10.250.0.3 | 150 | 1.0% | 100 Mbps |
+| S4 | Silver | 31 | 10.250.0.4 | 150 | 1.0% | 100 Mbps |
+| S5 | Bronze | 41 | 10.250.0.5 | 100 | 5.0% | 50 Mbps |
+
+Capacidade total do sistema definida em **800 Mbps** (soma de caps inicial = 800).
+Soma de caps em qualquer instante deve respeitar este teto, criando o dilema
+"quem cede" sob escassez.
+
+---
+
+## 3. Cenário de tráfego (4 fases)
+
+Cada run executa as quatro fases sequencialmente. Duração total por run = 240s.
+
+| Fase | Duração | Descrição | Carga aproximada por slice | O que estressa |
+|---|---|---|---|---|
+| A — Steady | 60s | Carga uniforme abaixo de qualquer cap | 80% do cap em todos | Linha de base, validação de normalidade |
+| B — Burst em 1 slice | 60s | Slice S5 (bronze) dispara para 5× sua média | S5 a 500% da média, demais a 80% | Detecção de outlier, decisão de conter slice de baixa prioridade |
+| C — Flash crowd em 2 slices | 60s | Slices S3 e S4 (silver) disparam juntos | S3 e S4 a 300% da média, demais a 80% | Decisão sob escassez (preserva ouro? aperta prata? sacrifica bronze?) |
+| D — Recovery | 60s | Tudo volta ao normal | 80% do cap em todos | Reversão de decisões anteriores, libera caps |
+
+---
+
+## 4. Tabela de experimentos
+
+| # | Nome | Controlador | Baseline? | O que mede | Função no estudo |
+|---|---|---|---|---|---|
+| E1 | Static | MBR fixo, nenhuma ação | **Sim (piso)** | SLA violations, loss, throughput, fairness | Define teto de violações sem qualquer adaptação |
+| E2 | Threshold | Se loss>θ em slice X, baixa MBR de X em ΔY | **Sim (clássico)** | Idem + nº de ações + oscilação | Reator simples baseado em métrica única |
+| E3 | Greedy | Maximiza utilização do slice mais folgado | **Sim (clássico)** | Idem + fairness | Otimizador míope que tende a violar SLA secundário |
+| E4 | Agentic-Single | Um único LLM local com tools + reasoning trace | **Não (proposto)** | Idem + tokens/decisão + latência LLM + tool-call accuracy + coerência de raciocínio | Demonstração da viabilidade da abordagem |
+| E5 | Agentic-Sweep | Varredura entre N modelos open-weight (7B, 14B, 24B, 70B se viável) | **Não (proposto)** | Idem por modelo, comparação inter-modelos | Identifica o limiar de capacidade necessário para a tarefa |
+| E6 | Policy-as-Prompt | Melhor LLM de E5 com política declarativa em runtime | **Não (proposto)** | Aderência à nova política sem mudar código | Avalia interface de operador via linguagem natural |
+| E7 | Ablation no-trace | Melhor LLM de E5 com reasoning trace desativado | **Não (proposto)** | Diferença vs E5 em qualidade de decisão | Isola o efeito do raciocínio explícito |
+
+---
+
+## 5. Justificativa dos baselines escolhidos
+
+| Baseline | Por que é necessário | Por que não é injusto |
+|---|---|---|
+| Static (E1) | Sem ele, qualquer controlador parece bom | Representa a operação default sem adaptação |
+| Threshold (E2) | Estado da arte clássico em controle reativo de rede | Implementação direta, sem hyperparameters customizados |
+| Greedy (E3) | Representa políticas de maximização de utilização presentes em literatura | Heurística canônica e amplamente usada |
+
+| Não incluído | Justificativa |
+|---|---|
+| RL pré-treinado | Contradiz a contribuição central (zero-shot adaptation). Tratado como future work. |
+| Heurísticas customizadas | Seriam injustas pois otimizadas para o cenário específico |
+| Optimal solver | Inviável em runtime; serve apenas como upper-bound offline (opcional) |
+
+---
+
+## 6. Métricas por categoria
+
+### 6.1 QoS (todas as configurações geram)
+
+| Métrica | Unidade | Por slice ou agregada | Notas |
+|---|---|---|---|
+| SLA violations count | inteiro | por slice | Conta janelas onde loss>limiar do tier |
+| SLA violations duration | segundos | por slice | Soma temporal das janelas violadas |
+| Loss rate média | % | por slice | Janela de 1s |
+| Loss rate p95, p99 | % | por slice | Sobre toda a run |
+| Throughput entregue | Mbps | por slice | RX no receiver / Tx no generator |
+| Fairness index Jain | adimensional | agregado | Sobre throughput entregue |
+
+### 6.2 Controlador (todas as configurações)
+
+| Métrica | Unidade | Notas |
+|---|---|---|
+| Número de ações tomadas | inteiro | Ações por run |
+| Tempo entre ações | segundos | Distribuição |
+| Oscilação | inteiro | Mudanças de direção em ações consecutivas |
+| Tempo até primeira ação após mudança de regime | segundos | Latência de resposta |
+| Reversibilidade | % | Ações que foram desfeitas em fases posteriores |
+
+### 6.3 Exclusivas do agentic (E4, E5, E6, E7)
+
+| Métrica | Unidade | Notas |
+|---|---|---|
+| Tokens consumidos por decisão | inteiro | Input + output |
+| Latência LLM por decisão | ms | Tempo entre prompt e parse de resposta |
+| Tool-call accuracy | % | Chamadas com argumentos válidos |
+| Reasoning coherence | escala 1-5 | Avaliada por LLM-as-judge ou rubrica humana em sample |
+| Predição vs realidade | % | Acerto da predição do agente sobre o efeito da própria ação |
+
+---
+
+## 7. Hipóteses derivadas e conclusões esperadas
+
+### 7.1 Conclusões fortes (esperadas, defensáveis)
+
+| Comparação | Resultado esperado | Conclusão sustentada |
+|---|---|---|
+| E1 vs E4 | Agente reduz violations significativamente | "Adaptação ativa supera política estática sob regime dinâmico" |
+| E2 vs E4 | Agente tem menos oscilação e menos ações | "Reasoning multicamada reduz reação ruidosa de threshold simples" |
+| E3 vs E4 | Agente preserva SLA de tier secundário melhor que greedy | "Agentic incorpora trade-offs implícitos sem codificação explícita" |
+| E4 vs E5 | Modelos maiores raciocinam melhor, com saturação em algum tamanho | "Qualidade escala com capacidade até threshold X de parâmetros" |
+| E6 | Agente segue nova política sem retreino | "Policy-as-prompt é viável como abstração de operador" |
+| E5 vs E7 | Reasoning explícito gera ações de qualidade comparável ou superior a no-trace | "Trace explícito melhora ou não prejudica decisão, e adiciona auditoria" |
+
+### 7.2 Resultados que ainda são publicáveis com reposicionamento
+
+| Cenário possível | Conclusão alternativa que ainda é contribuição |
+|---|---|
+| Threshold (E2) bate agente em fases steady | "Agente compete em fases dinâmicas, não em steady. Ganho aparece sob mudança de regime." |
+| Modelos pequenos (7B) falham, grandes (24B+) ganham | "Agentic QoS exige raciocínio acima de threshold X de parâmetros." |
+| Latência LLM impede decisão sub-5s | "Agentic não cabe em loop reativo rápido, mas cabe em decisão de política em janelas maiores." |
+| E7 mostra que trace não muda decisão | "Reasoning trace serve para auditoria sem custo de qualidade." |
+
+### 7.3 Resultados que invalidariam a contribuição
+
+| Resultado | Por que invalida | Ação corretiva |
+|---|---|---|
+| Agente não bate static (E1) | Sistema não está aprendendo nada útil | Revisar tools, prompt e telemetria |
+| Modelos diferentes dão resultado idêntico | Cenário não exige raciocínio | Aumentar complexidade do cenário ou número de slices |
+| Reasoning traces incoerentes em todos os modelos | LLM está alucinando, não decidindo | Revisar tool design, examples e guardrails |
+| Tool-call accuracy < 90% mesmo no melhor modelo | Interface de tools mal projetada | Simplificar schema, adicionar validação prévia |
+
+---
+
+## 8. Pré-requisitos a fixar antes de codar
+
+| Item | Decidido | Recomendação |
+|---|---|---|
+| Número de slices | Sim | 5 |
+| Distribuição de tier | Sim | 2 Gold + 2 Silver + 1 Bronze |
+| Capacidade total do sistema | Sim | 800 Mbps |
+| Frequência de decisão | A confirmar | 10 segundos para todos os controladores |
+| Janela de telemetria | A confirmar | 10 segundos rolling |
+| Stack LLM | A confirmar | vLLM como servidor |
+| Modelos a comparar | A confirmar | 4 a 5 modelos open-weight |
+| Critério de SLA por tier | Sim | Tabela seção 2 |
+| N de runs por experimento | A confirmar | 10 runs por configuração |
+
+---
+
+## 9. Plano de execução em ordem
+
+| Etapa | Pré-requisito | Saída |
+|---|---|---|
+| 1. Estender setup para 5 slices | Patcheado pfcpsim aceita lista | 5 sessões PFCP, 5 streams TRex, 5 QERs |
+| 2. Implementar APIs HTTP no testbed | TRex e UPF rodando | trex_ctl_api, upf_telemetry_api, rx_metrics_api |
+| 3. Implementar geradores de regime | APIs prontas | scripts que disparam fases A, B, C, D |
+| 4. Implementar baselines E1, E2, E3 | APIs prontas | runner que aplica controlador e coleta métricas |
+| 5. Validar baselines com N=10 runs cada | Baselines implementados | tabela de resultados base |
+| 6. Implementar tools e schema do agente | APIs estáveis | tool definitions JSON Schema |
+| 7. Subir vLLM com primeiro modelo | GPU disponível | endpoint OpenAI-compatible |
+| 8. Implementar agente E4 | Tools e LLM | runner agentic com logs de trace |
+| 9. Validar E4 com N=10 runs | Agente E4 funcional | resultados comparáveis a baselines |
+| 10. Sweep E5 entre modelos | E4 estável | tabela inter-modelos |
+| 11. Implementar E6 (policy-as-prompt) | Melhor modelo identificado | runner com política em runtime |
+| 12. Implementar E7 (ablation no-trace) | Idem | runner sem trace |
+| 13. Análise estatística e figuras | Todos resultados | tabelas finais e plots |
+
+---
+
+## 10. Resumo executivo
+
+```text
+Slices:                5 (2 Gold, 2 Silver, 1 Bronze)
+Capacidade total:      800 Mbps
+Cenário:               4 fases (Steady, Burst, Flash Crowd, Recovery)
+Duração por run:       240 s
+Runs por config:       10 (a confirmar)
+Experimentos:          7 (3 baselines + 4 propostos)
+Baselines:             Static, Threshold, Greedy
+Excluído por design:   RL (zero-shot é o ponto da contribuição)
+Modelos LLM:           4 a 5 open-weight via vLLM (a confirmar)
+Métricas:              QoS, controlador, exclusivas-agentic
+Hipóteses verificáveis: H1 adaptação, H2 capacidade, H3 raciocínio
+```

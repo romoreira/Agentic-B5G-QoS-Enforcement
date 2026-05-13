@@ -1,0 +1,25 @@
+{
+  "created_at_utc": "2026-05-12T20:20:58.485401Z",
+  "experiment": "e4b_agentic_hysteresis_realtime",
+  "run": "run_04",
+  "controller": "policy_constrained_llm_realtime_hysteresis",
+  "patches": [
+    "candidates: monotonic non-increasing under active app QER policing",
+    "validate_decision: action derived from chosen candidate_id"
+  ],
+  "vllm_base_url": "http://127.0.0.1:18000/v1",
+  "vllm_model": "Qwen/Qwen2.5-7B-Instruct",
+  "upf_ssh": "ubuntu@192.168.90.1",
+  "window_sec": 10,
+  "windows_per_phase": 6,
+  "initial_mbr_kbps": [
+    200000,
+    200000,
+    150000,
+    150000,
+    100000
+  ],
+  "capacity_limit_kbps": 800000,
+  "trex_profile": "/opt/trex/v3.08/automation/exp2/agentic_5slice_phase_profile.py",
+  "scale": 1.0
+}

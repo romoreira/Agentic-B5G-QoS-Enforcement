@@ -1,0 +1,6 @@
+  gtpuDecap::GtpuDecap()
+    Input gates:
+        0: batches 0           packets 0            pdrLookup:1 ->	
+    Output gates:
+        0: batches 116703345   packets 1102853575   -> 0:appQERLookup	Track::track0
+    Deadends: 0           

@@ -1,0 +1,7 @@
+timestamp_utc,phase,window_index,old_mbr_kbps,new_mbr_kbps,reason,tool_returncode
+2026-05-12T17:26:03.621335Z,B,1,"200000,200000,150000,150000,100000","200000,200000,150000,150000,70000","real app QER policing in bronze burst, monotonic non-increasing S5",0
+2026-05-12T17:26:49.881625Z,B,2,"200000,200000,150000,150000,70000","200000,200000,150000,150000,60000","real app QER policing in bronze burst, monotonic non-increasing S5",0
+2026-05-12T17:27:36.260514Z,B,3,"200000,200000,150000,150000,60000","200000,200000,150000,150000,50000","real app QER policing in bronze burst, monotonic non-increasing S5",0
+2026-05-12T17:30:40.381913Z,C,1,"200000,200000,150000,150000,50000","200000,200000,110000,110000,100000","real app QER policing in silver flash crowd, monotonic non-increasing Silver, preserve Gold",0
+2026-05-12T17:31:27.110207Z,C,2,"200000,200000,110000,110000,100000","200000,200000,100000,100000,100000","real app QER policing in silver flash crowd, monotonic non-increasing Silver, preserve Gold",0
+2026-05-12T17:36:04.718539Z,D,2,"200000,200000,100000,100000,100000","200000,200000,150000,150000,100000","recovery phase, adjust S3 and S4",0

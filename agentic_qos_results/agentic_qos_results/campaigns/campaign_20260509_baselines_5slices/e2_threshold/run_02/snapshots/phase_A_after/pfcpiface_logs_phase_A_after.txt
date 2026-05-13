@@ -1,0 +1,80 @@
+2026-05-11T14:06:16.013Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.013Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.055Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.055Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.055Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.055Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.055Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.055Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.097Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.097Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.097Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.097Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.097Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.097Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.139Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.139Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.139Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.139Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.139Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:06:16.139Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.050Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.050Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.050Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.050Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.050Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.050Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.093Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.093Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.093Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.093Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.093Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.093Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.135Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.135Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.135Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.135Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.135Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.135Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.177Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.177Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.177Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.177Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.177Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.177Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.218Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.218Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.218Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.218Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.218Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:07:40.218Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.476Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.476Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.476Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.476Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.476Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.476Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.522Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.522Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.522Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.522Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.522Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.522Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.564Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.565Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.565Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.565Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.565Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.565Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.607Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.607Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.607Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.607Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.607Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.607Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.648Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.648Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.648Z	WARN	pfcpiface/parse_qer.go:79	could not read GBRUL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.648Z	WARN	pfcpiface/parse_qer.go:84	could not read GBRDL. It might be because of non-GBR flow	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.648Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}
+2026-05-11T14:09:24.648Z	INFO	pfcpiface/session_qer.go:130	session QER found. QER ID: 0	{"component": "UPF", "category": "Pfcp"}

@@ -1,0 +1,27 @@
+  enp7s0np0Fast Driver PMDPort    HWaddr 10:70:fd:c1:59:c4  MTU 1500  
+               Speed 25,000Mbps  Link UP    Duplex FULL  Autoneg ON   
+       Inc/RX  packets: 217,142,022         bytes: 44,731,254,252      
+               dropped: 321                 
+       Out/TX  packets: 0                   bytes: 0                   
+               dropped: 0                   
+
+  enp8s0np0Fast Driver PMDPort    HWaddr 10:70:fd:c1:59:c5  MTU 1500  
+               Speed 25,000Mbps  Link UP    Duplex FULL  Autoneg ON   
+       Inc/RX  packets: 18                  bytes: 1,548               
+               dropped: 0                   
+       Out/TX  packets: 164,912,863         bytes: 28,035,186,710      
+               dropped: 0                   
+
+  notifyCP     Driver UnixSocketPort HWaddr 8e:de:ac:f5:45:e3  MTU 1500  
+               Speed UNKNOWN     Link UP    Duplex FULL  Autoneg ON   
+       Inc/RX  packets: 0                   bytes: 0                   
+               dropped: 0                   
+       Out/TX  packets: 0                   bytes: 0                   
+               dropped: 0                   
+
+  pfcpPort     Driver UnixSocketPort HWaddr c2:3f:6e:aa:5b:03  MTU 1500  
+               Speed UNKNOWN     Link UP    Duplex FULL  Autoneg ON   
+       Inc/RX  packets: 0                   bytes: 0                   
+               dropped: 0                   
+       Out/TX  packets: 0                   bytes: 0                   
+               dropped: 0                   

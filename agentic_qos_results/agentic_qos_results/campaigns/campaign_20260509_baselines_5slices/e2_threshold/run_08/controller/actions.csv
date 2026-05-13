@@ -1,0 +1,4 @@
+timestamp_utc,phase,controller,old_mbr_kbps,new_mbr_kbps,reason
+2026-05-11T14:49:10Z,B,e2_threshold,"200000,200000,150000,150000,100000","200000,200000,150000,150000,50000","threshold baseline contains bronze slice during S5 burst"
+2026-05-11T14:50:35Z,C,e2_threshold,"200000,200000,150000,150000,50000","200000,200000,120000,120000,50000","threshold baseline contains silver slices during flash crowd"
+2026-05-11T14:51:59Z,D,e2_threshold,"current","200000,200000,150000,150000,100000","recovery restores initial MBRs"

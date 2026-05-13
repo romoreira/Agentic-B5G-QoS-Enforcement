@@ -1,0 +1,5 @@
+phase,windows,decisions,status,access_rx_packets,core_tx_packets,app_qer_meter_red_packets,mean_offered_mbps,mean_delivered_mbps,mean_policing_ratio,pdr_fail,far_fail,bad_route,n3_rx_drops,n6_tx_drops,action_count,fallback_count,tool_failure_count,mean_decision_latency_ms,mean_total_tokens,notes
+A,6,6,OK,22857066,22857066,0,627.8074128,518.093496,0.0,0,0,0,0,0,0,0,0,3734.9849939346313,794,clean
+B,6,6,OK,34285621,23447055,9479020,941.7117074666667,531.46658,0.27647217696515336,0,0,0,0,0,6,0,0,4491.744915644328,925.5,clean
+C,6,6,WARN,39999434,25839624,11294079,1098.6511045333334,585.698144,0.28235597977803195,0,0,0,485,0,6,0,0,4607.41659005483,938.3333333333334,tiny NIC drops 0.000007
+D,6,6,WARN,22857067,22857066,0,627.8074242666667,518.093496,0.0,0,0,0,0,0,0,6,0,3866.141200065613,840,fallback used

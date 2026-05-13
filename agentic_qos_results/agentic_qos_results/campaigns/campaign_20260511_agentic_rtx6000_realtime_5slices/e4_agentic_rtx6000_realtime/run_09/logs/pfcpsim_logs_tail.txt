@@ -1,0 +1,200 @@
+2026-05-11T21:45:50.504Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:45:50.546Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:46:36.102Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:46:36.145Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:46:36.187Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:46:36.229Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:46:36.271Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:46:36.313Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:47:22.543Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:47:22.587Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:47:22.629Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:47:22.671Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:47:22.713Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:47:22.755Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.022Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.065Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.107Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.150Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.193Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.234Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.490Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.532Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.574Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.616Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.658Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:53.700Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:56.057Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:56.100Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:56.141Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:56.183Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:56.225Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:51:56.266Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:11.297Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:11.340Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:11.383Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:11.425Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:11.468Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=70000,dl=70000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:11.510Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:57.252Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:57.295Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:57.337Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:57.379Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:57.421Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=60000,dl=60000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:57:57.463Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:58:42.782Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:58:42.825Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:58:42.867Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:58:42.909Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:58:42.951Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=70000,dl=70000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:58:42.993Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:59:28.934Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:59:28.977Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:59:29.020Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:59:29.062Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:59:29.103Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=60000,dl=60000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T21:59:29.145Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:00:14.763Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:00:14.809Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:00:14.852Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:00:14.894Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:00:14.936Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=70000,dl=70000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:00:14.978Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:00.598Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:00.645Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:00.687Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:00.729Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:00.771Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=60000,dl=60000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:00.813Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:46.833Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:46.876Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:46.918Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:46.960Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:47.002Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:01:47.044Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:02:33.035Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:02:33.078Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:02:33.120Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:02:33.162Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:02:33.204Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:02:33.246Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:03:18.795Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:03:18.837Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:03:18.880Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:03:18.921Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:03:18.963Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:03:19.005Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:05.200Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:05.244Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:05.286Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:05.328Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:05.370Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:05.412Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:51.192Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:51.235Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:51.277Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:51.319Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:51.361Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:04:51.402Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:05:37.015Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:05:37.059Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:05:37.101Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:05:37.144Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:05:37.185Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:05:37.227Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:06.721Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:06.763Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:06.806Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:06.848Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:06.890Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:06.932Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:07.177Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:07.219Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:07.261Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:07.303Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:07.345Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:07.387Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:10.000Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:10.043Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:10.085Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:10.127Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:10.169Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:10:10.211Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:15:25.032Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:15:25.075Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:15:25.118Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:15:25.161Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:15:25.203Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=70000,dl=70000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:15:25.244Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:10.936Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:10.979Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:11.021Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:11.063Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:11.105Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=60000,dl=60000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:11.147Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:56.510Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:56.553Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:56.595Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:56.637Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:56.679Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=70000,dl=70000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:16:56.721Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:17:42.483Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:17:42.526Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:17:42.568Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:17:42.611Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:17:42.652Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=60000,dl=60000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:17:42.694Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:18:28.490Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:18:28.533Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:18:28.576Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:18:28.618Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:18:28.660Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=70000,dl=70000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:18:28.702Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:19:14.214Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:19:14.257Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:19:14.300Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:19:14.342Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:19:14.384Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=60000,dl=60000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:19:14.425Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:00.468Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:00.511Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:00.553Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:00.595Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:00.636Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:00.678Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:46.541Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:46.584Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:46.626Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:46.668Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:46.710Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:20:46.752Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:21:32.278Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:21:32.321Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:21:32.363Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:21:32.405Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:21:32.447Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:21:32.489Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:22:18.704Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:22:18.748Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:22:18.790Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:22:18.832Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:22:18.874Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:22:18.916Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:05.071Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:05.114Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:05.156Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:05.198Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=110000,dl=110000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:05.240Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:05.282Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:50.835Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:50.878Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:50.920Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:50.961Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=120000,dl=120000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:51.003Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:23:51.045Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:28:21.717Z	INFO	pfcpsim/server.go:430	Modify session idx=0 baseID=1 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:28:21.761Z	INFO	pfcpsim/server.go:430	Modify session idx=1 baseID=11 app-level MBR (ul=200000,dl=200000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:28:21.803Z	INFO	pfcpsim/server.go:430	Modify session idx=2 baseID=21 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:28:21.845Z	INFO	pfcpsim/server.go:430	Modify session idx=3 baseID=31 app-level MBR (ul=150000,dl=150000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:28:21.887Z	INFO	pfcpsim/server.go:430	Modify session idx=4 baseID=41 app-level MBR (ul=100000,dl=100000) kbps	{"component": "LIB", "category": "Pfcpsim"}
+2026-05-11T22:28:21.929Z	INFO	pfcpsim/server.go:473	5 sessions were modified	{"component": "LIB", "category": "Pfcpsim"}

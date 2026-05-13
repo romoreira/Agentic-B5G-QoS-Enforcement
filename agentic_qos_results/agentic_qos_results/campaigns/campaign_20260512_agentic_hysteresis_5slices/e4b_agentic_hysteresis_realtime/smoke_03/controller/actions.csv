@@ -1,0 +1,5 @@
+timestamp_utc,phase,window_index,old_mbr_kbps,new_mbr_kbps,reason,tool_returncode
+2026-05-12T18:46:16.342007Z,B,1,"200000,200000,150000,150000,100000","200000,200000,150000,150000,70000","app QER meter red delta is positive, reducing S5 only",0
+2026-05-12T18:47:01.099715Z,B,2,"200000,200000,150000,150000,70000","200000,200000,150000,150000,60000","app QER meter red delta is positive, reducing S5 only",0
+2026-05-12T18:48:30.015357Z,B,4,"200000,200000,150000,150000,60000","200000,200000,150000,150000,50000","app QER meter red delta is positive, reducing S5 only",0
+2026-05-12T18:50:45.461846Z,C,1,"200000,200000,150000,150000,50000","200000,200000,110000,110000,100000","real app QER policing in silver flash crowd, monotonic non-increasing Silver, preserve Gold",0

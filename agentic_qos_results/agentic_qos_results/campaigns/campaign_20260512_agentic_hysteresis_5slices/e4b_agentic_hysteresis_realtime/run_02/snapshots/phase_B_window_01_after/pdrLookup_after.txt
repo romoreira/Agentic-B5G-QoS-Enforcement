@@ -1,0 +1,22 @@
+  pdrLookup::WildcardMatch(8 fields, 10 rules)
+    Per-packet metadata fields:
+      src_iface: read   1 bytes at offset 12
+tunnel_ipv4_dst: read   4 bytes at offset 28
+           teid: read   4 bytes at offset 32
+         src_ip: read   4 bytes at offset 44
+         dst_ip: read   4 bytes at offset 40
+       src_port: read   2 bytes at offset 36
+       dst_port: read   2 bytes at offset 14
+       ip_proto: read   1 bytes at offset 13
+         pdr_id: write  4 bytes (no downstream reader)
+          fseid: write  8 bytes at offset 16
+         ctr_id: write  4 bytes (no downstream reader)
+         qer_id: write  4 bytes at offset 24
+         far_id: write  4 bytes at offset 8
+    Input gates:
+        0: batches 0           packets 0            pktParse:1 ->	
+    Output gates:
+        0: batches 0           packets 0            -> 0:appQERLookup	Track::track0
+        1: batches 66762378    packets 628569320    -> 0:gtpuDecap	Track::track0
+        2: batches 0           packets 0            -> 0:pdrLookupFail	Track::track0
+    Deadends: 0           

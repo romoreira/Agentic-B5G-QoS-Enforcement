@@ -1,0 +1,24 @@
+{
+  "timestamp_utc": "2026-05-12T19:45:14.804935Z",
+  "experiment": "e4b_agentic_hysteresis_realtime",
+  "run": "run_01",
+  "total_decisions": 24,
+  "total_actions": 3,
+  "total_fallbacks": 0,
+  "total_tool_failures": 0,
+  "final_mbr_kbps": [
+    200000,
+    200000,
+    150000,
+    150000,
+    100000
+  ],
+  "window_sec": 10,
+  "windows_per_phase": 6,
+  "phases": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ]
+}

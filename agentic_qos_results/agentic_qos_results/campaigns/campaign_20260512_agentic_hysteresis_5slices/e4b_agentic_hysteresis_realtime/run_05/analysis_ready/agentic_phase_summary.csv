@@ -1,0 +1,5 @@
+phase,windows,decisions,status,access_rx_packets,core_tx_packets,app_qer_meter_red_packets,mean_offered_mbps,mean_delivered_mbps,mean_policing_ratio,pdr_fail,far_fail,bad_route,n3_rx_drops,n6_tx_drops,action_count,fallback_count,tool_failure_count,mean_decision_latency_ms,mean_total_tokens,notes
+A,6,6,OK,22857066,22857066,0,627.8074128,518.093496,0.0,0,0,0,0,0,0,0,0,2455.9483925501504,908,clean
+B,6,6,OK,34285620,23609530,9477105,941.711696,535.1493466666667,0.2764163226448873,0,0,0,0,0,1,0,0,3157.0650339126587,1068.6666666666667,clean
+C,6,6,OK,39999920,25532204,11292636,1098.6644373333334,578.7299573333333,0.28231647874878146,0,0,0,0,0,1,0,0,2893.509864807129,1032,clean
+D,6,6,OK,22857067,22857066,0,627.8074242666667,518.093496,0.0,0,0,0,0,0,1,0,0,2584.407925605774,914.5,clean

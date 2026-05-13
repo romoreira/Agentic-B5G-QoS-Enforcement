@@ -1,0 +1,4 @@
+timestamp_utc,phase,window_index,old_mbr_kbps,new_mbr_kbps,reason,tool_returncode
+2026-05-12T20:44:01.754374Z,B,1,"200000,200000,150000,150000,100000","200000,200000,150000,150000,70000","app QER meter red delta is positive, reducing S5 only",0
+2026-05-12T20:48:32.079352Z,C,1,"200000,200000,150000,150000,70000","200000,200000,110000,110000,100000","monotonic non-increasing Silver, preserve Gold",0
+2026-05-12T20:53:00.634572Z,D,1,"200000,200000,110000,110000,100000","200000,200000,150000,150000,100000","recovery phase, only admissible candidate is the initial SLA vector",0

@@ -1,0 +1,6 @@
+slice,tier,teid,ue_ip,initial_cap_mbps
+S1,Gold,1,10.250.0.1,200
+S2,Gold,11,10.250.0.2,200
+S3,Silver,21,10.250.0.3,150
+S4,Silver,31,10.250.0.4,150
+S5,Bronze,41,10.250.0.5,100

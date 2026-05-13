@@ -1,0 +1,111 @@
+
+===== START phase=D at 2026-05-12T20:36:50.884539Z =====
+
+Using 'python3' as Python interpeter
+
+
+Connecting to RPC server on localhost:4501                   [SUCCESS]
+
+
+Connecting to publisher server on localhost:4500             [SUCCESS]
+
+
+Acquiring ports [0, 1]:                                      [SUCCESS]
+
+
+Server Info:
+
+Server version:   v3.08 @ STL
+Server mode:      Stateless
+Server CPU:       8 x AMD EPYC 7532 32-Core Processor
+Ports count:      2 x 25Gbps @ MT27800 Family [ConnectX-5]	
+
+-=TRex Console v3.0=-
+
+Type 'help' or '?' for supported actions
+
+trex(service: 1)>
+Enabling service mode on port(s): [1]                        [SUCCESS]
+
+1.96 [ms]
+
+trex(service: 1)>
+Removing all streams from port(s) [0._]:                     [SUCCESS]
+
+
+Attaching 5 streams to port(s) [0._]:                        [SUCCESS]
+
+
+Starting traffic on port(s) [0._]:                           [SUCCESS]
+
+27.62 [ms]
+
+trex(service: 1)>Shutting down RPC client
+
+
+===== STATS phase=D at 2026-05-12T20:37:03.415390Z =====
+
+Using 'python3' as Python interpeter
+
+
+Connecting to RPC server on localhost:4501                   [SUCCESS]
+
+
+Connecting to publisher server on localhost:4500             [SUCCESS]
+
+
+Acquiring ports [0, 1]:                                      [SUCCESS]
+
+
+Server Info:
+
+Server version:   v3.08 @ STL
+Server mode:      Stateless
+Server CPU:       8 x AMD EPYC 7532 32-Core Processor
+Ports count:      2 x 25Gbps @ MT27800 Family [ConnectX-5]	
+
+-=TRex Console v3.0=-
+
+Type 'help' or '?' for supported actions
+
+trex(service: 1)>Global Statistics
+
+connection   : localhost, Port 4501                       total_tx_L2  : 248.37 Mbps                    
+version      : STL @ v3.08                                total_tx_L1  : 272.02 Mbps                    
+cpu_util.    : 1.51% @ 8 cores (8 per dual port)          total_rx     : 209.86 Mbps                    
+rx_cpu_util. : 19.25% / 0 pps                             total_pps    : 147.84 Kpps                    
+async_util.  : 0% / 0 bps                                 drop_rate    : 38.51 Mbps                     
+total_cps.   : 0 cps                                      queue_full   : 0 pkts                         
+
+Port Statistics
+
+   port    |         0         |         1         |       total       
+-----------+-------------------+-------------------+------------------
+owner      |              root |              root |                   
+link       |                UP |                UP |                   
+state      |              IDLE |              IDLE |                   
+speed      |           25 Gb/s |           25 Gb/s |                   
+CPU util.  |              0.0% |              0.0% |                   
+--         |                   |                   |                   
+Tx bps L2  |       248.37 Mbps |             0 bps |       248.37 Mbps 
+Tx bps L1  |       272.02 Mbps |             0 bps |       272.02 Mbps 
+Tx pps     |       147.84 Kpps |             0 pps |       147.84 Kpps 
+Line Util. |            1.09 % |               0 % |                   
+---        |                   |                   |                   
+Rx bps     |         17.31 bps |       209.86 Mbps |       209.86 Mbps 
+Rx pps     |          0.03 pps |       150.76 Kpps |       150.76 Kpps 
+----       |                   |                   |                   
+opackets   |                 0 |                 0 |                 0 
+ipackets   |                 0 |                 0 |                 0 
+obytes     |                 0 |                 0 |                 0 
+ibytes     |                 0 |                 0 |                 0 
+tx-pkts    |            0 pkts |            0 pkts |            0 pkts 
+rx-pkts    |            0 pkts |            0 pkts |            0 pkts 
+tx-bytes   |               0 B |               0 B |               0 B 
+rx-bytes   |               0 B |               0 B |               0 B 
+-----      |                   |                   |                   
+oerrors    |                 0 |                 0 |                 0 
+ierrors    |                 0 |                 0 |                 0 
+
+trex(service: 1)>Shutting down RPC client
+

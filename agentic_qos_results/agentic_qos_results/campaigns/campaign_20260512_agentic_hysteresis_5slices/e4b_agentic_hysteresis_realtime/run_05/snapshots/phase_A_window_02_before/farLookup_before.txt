@@ -1,0 +1,17 @@
+  farLookup::ExactMatch(2 fields, 10 rules)
+    Per-packet metadata fields:
+         far_id: read   4 bytes at offset 8
+          fseid: read   8 bytes at offset 16
+         action: write  1 bytes at offset 36
+tunnel_out_type: write  1 bytes at offset 12
+tunnel_out_src_ip4addr: write  4 bytes at offset 32
+tunnel_out_dst_ip4addr: write  4 bytes at offset 28
+tunnel_out_teid: write  4 bytes at offset 24
+tunnel_out_udp_port: write  2 bytes at offset 14
+    Input gates:
+        0: batches 0           packets 0            sessionQERLookup:1 ->, sessionQERLookup:2 ->, sessionQERLookup:6 ->, sessionQERLookup:4 ->	
+    Output gates:
+        0: batches 101368016   packets 759988871    -> 0:farMerge	Track::track0
+        1: batches 0           packets 0            -> 0:gtpuEncap	Track::track0
+        2: batches 0           packets 0            -> 0:farLookupFail	Track::track0
+    Deadends: 0           

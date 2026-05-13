@@ -1,0 +1,11 @@
+run,status,windows,decisions,actions,fallbacks,tool_failures,oscillations_total,oscillations_A,oscillations_B,oscillations_C,oscillations_D,mean_llm_latency_ms,mean_total_tokens,pdr_fail,far_fail,bad_route,notes
+run_01,WARN,24,24,13,2,0,8,0,4,4,0,4165.960003932317,867.7916666666666,0,0,0,fallbacks=2; oscillations=8
+run_02,WARN,24,24,13,4,0,8,0,4,4,0,4262.594848871231,874.5833333333334,0,0,0,fallbacks=4; oscillations=8
+run_03,WARN,24,24,12,6,0,8,0,4,4,0,4242.303401231766,875.2916666666666,0,0,0,fallbacks=6; oscillations=8
+run_04,WARN,24,24,13,3,0,8,0,4,4,0,4205.177227656047,872.25,0,0,0,fallbacks=3; oscillations=8
+run_05,WARN,24,24,12,6,0,8,0,4,4,0,4193.742175896962,875,0,0,0,fallbacks=6; oscillations=8
+run_06,WARN,24,24,12,6,0,8,0,4,4,0,4192.9799020290375,874.6666666666666,0,0,0,fallbacks=6; oscillations=8
+run_07,WARN,24,24,12,6,0,8,0,4,4,0,4198.020040988922,874.5833333333334,0,0,0,fallbacks=6; oscillations=8
+run_08,WARN,24,24,12,6,0,8,0,4,4,0,4175.0719249248505,874.4583333333334,0,0,0,fallbacks=6; oscillations=8
+run_09,WARN,24,24,13,5,0,8,0,4,4,0,4253.591477870941,876.2083333333334,0,0,0,fallbacks=5; oscillations=8
+run_10,WARN,24,24,12,6,0,8,0,4,4,0,4207.633753617604,874.3333333333334,0,0,0,fallbacks=6; oscillations=8

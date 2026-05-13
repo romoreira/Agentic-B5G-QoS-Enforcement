@@ -1,0 +1,301 @@
+# HELP go_gc_duration_seconds A summary of the wall-time pause (stop-the-world) duration in garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 7.2956e-05
+go_gc_duration_seconds{quantile="0.25"} 0.000129753
+go_gc_duration_seconds{quantile="0.5"} 0.000165008
+go_gc_duration_seconds{quantile="0.75"} 0.000233185
+go_gc_duration_seconds{quantile="1"} 0.008165336
+go_gc_duration_seconds_sum 0.097694274
+go_gc_duration_seconds_count 236
+# HELP go_gc_gogc_percent Heap size target percentage configured by the user, otherwise 100. This value is set by the GOGC environment variable, and the runtime/debug.SetGCPercent function. Sourced from /gc/gogc:percent.
+# TYPE go_gc_gogc_percent gauge
+go_gc_gogc_percent 100
+# HELP go_gc_gomemlimit_bytes Go runtime memory limit configured by the user, otherwise math.MaxInt64. This value is set by the GOMEMLIMIT environment variable, and the runtime/debug.SetMemoryLimit function. Sourced from /gc/gomemlimit:bytes.
+# TYPE go_gc_gomemlimit_bytes gauge
+go_gc_gomemlimit_bytes 9.223372036854776e+18
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 18
+# HELP go_info Information about the Go environment.
+# TYPE go_info gauge
+go_info{version="go1.26.2"} 1
+# HELP go_memstats_alloc_bytes Number of bytes allocated in heap and currently in use. Equals to /memory/classes/heap/objects:bytes.
+# TYPE go_memstats_alloc_bytes gauge
+go_memstats_alloc_bytes 2.084984e+06
+# HELP go_memstats_alloc_bytes_total Total number of bytes allocated in heap until now, even if released already. Equals to /gc/heap/allocs:bytes.
+# TYPE go_memstats_alloc_bytes_total counter
+go_memstats_alloc_bytes_total 1.671676e+08
+# HELP go_memstats_buck_hash_sys_bytes Number of bytes used by the profiling bucket hash table. Equals to /memory/classes/profiling/buckets:bytes.
+# TYPE go_memstats_buck_hash_sys_bytes gauge
+go_memstats_buck_hash_sys_bytes 1.444641e+06
+# HELP go_memstats_frees_total Total number of heap objects frees. Equals to /gc/heap/frees:objects + /gc/heap/tiny/allocs:objects.
+# TYPE go_memstats_frees_total counter
+go_memstats_frees_total 1.403307e+06
+# HELP go_memstats_gc_sys_bytes Number of bytes used for garbage collection system metadata. Equals to /memory/classes/metadata/other:bytes.
+# TYPE go_memstats_gc_sys_bytes gauge
+go_memstats_gc_sys_bytes 3.654912e+06
+# HELP go_memstats_heap_alloc_bytes Number of heap bytes allocated and currently in use, same as go_memstats_alloc_bytes. Equals to /memory/classes/heap/objects:bytes.
+# TYPE go_memstats_heap_alloc_bytes gauge
+go_memstats_heap_alloc_bytes 2.084984e+06
+# HELP go_memstats_heap_idle_bytes Number of heap bytes waiting to be used. Equals to /memory/classes/heap/released:bytes + /memory/classes/heap/free:bytes.
+# TYPE go_memstats_heap_idle_bytes gauge
+go_memstats_heap_idle_bytes 6.71744e+06
+# HELP go_memstats_heap_inuse_bytes Number of heap bytes that are in use. Equals to /memory/classes/heap/objects:bytes + /memory/classes/heap/unused:bytes
+# TYPE go_memstats_heap_inuse_bytes gauge
+go_memstats_heap_inuse_bytes 4.325376e+06
+# HELP go_memstats_heap_objects Number of currently allocated objects. Equals to /gc/heap/objects:objects.
+# TYPE go_memstats_heap_objects gauge
+go_memstats_heap_objects 6326
+# HELP go_memstats_heap_released_bytes Number of heap bytes released to OS. Equals to /memory/classes/heap/released:bytes.
+# TYPE go_memstats_heap_released_bytes gauge
+go_memstats_heap_released_bytes 5.701632e+06
+# HELP go_memstats_heap_sys_bytes Number of heap bytes obtained from system. Equals to /memory/classes/heap/objects:bytes + /memory/classes/heap/unused:bytes + /memory/classes/heap/released:bytes + /memory/classes/heap/free:bytes.
+# TYPE go_memstats_heap_sys_bytes gauge
+go_memstats_heap_sys_bytes 1.1042816e+07
+# HELP go_memstats_last_gc_time_seconds Number of seconds since 1970 of last garbage collection.
+# TYPE go_memstats_last_gc_time_seconds gauge
+go_memstats_last_gc_time_seconds 1.77861917975329e+09
+# HELP go_memstats_mallocs_total Total number of heap objects allocated, both live and gc-ed. Semantically a counter version for go_memstats_heap_objects gauge. Equals to /gc/heap/allocs:objects + /gc/heap/tiny/allocs:objects.
+# TYPE go_memstats_mallocs_total counter
+go_memstats_mallocs_total 1.409633e+06
+# HELP go_memstats_mcache_inuse_bytes Number of bytes in use by mcache structures. Equals to /memory/classes/metadata/mcache/inuse:bytes.
+# TYPE go_memstats_mcache_inuse_bytes gauge
+go_memstats_mcache_inuse_bytes 36736
+# HELP go_memstats_mcache_sys_bytes Number of bytes used for mcache structures obtained from system. Equals to /memory/classes/metadata/mcache/inuse:bytes + /memory/classes/metadata/mcache/free:bytes.
+# TYPE go_memstats_mcache_sys_bytes gauge
+go_memstats_mcache_sys_bytes 48216
+# HELP go_memstats_mspan_inuse_bytes Number of bytes in use by mspan structures. Equals to /memory/classes/metadata/mspan/inuse:bytes.
+# TYPE go_memstats_mspan_inuse_bytes gauge
+go_memstats_mspan_inuse_bytes 243360
+# HELP go_memstats_mspan_sys_bytes Number of bytes used for mspan structures obtained from system. Equals to /memory/classes/metadata/mspan/inuse:bytes + /memory/classes/metadata/mspan/free:bytes.
+# TYPE go_memstats_mspan_sys_bytes gauge
+go_memstats_mspan_sys_bytes 277440
+# HELP go_memstats_next_gc_bytes Number of heap bytes when next garbage collection will take place. Equals to /gc/heap/goal:bytes.
+# TYPE go_memstats_next_gc_bytes gauge
+go_memstats_next_gc_bytes 4.39173e+06
+# HELP go_memstats_other_sys_bytes Number of bytes used for other system allocations. Equals to /memory/classes/other:bytes.
+# TYPE go_memstats_other_sys_bytes gauge
+go_memstats_other_sys_bytes 2.187487e+06
+# HELP go_memstats_stack_inuse_bytes Number of bytes obtained from system for stack allocator in non-CGO environments. Equals to /memory/classes/heap/stacks:bytes.
+# TYPE go_memstats_stack_inuse_bytes gauge
+go_memstats_stack_inuse_bytes 1.540096e+06
+# HELP go_memstats_stack_sys_bytes Number of bytes obtained from system for stack allocator. Equals to /memory/classes/heap/stacks:bytes + /memory/classes/os-stacks:bytes.
+# TYPE go_memstats_stack_sys_bytes gauge
+go_memstats_stack_sys_bytes 1.540096e+06
+# HELP go_memstats_sys_bytes Number of bytes obtained from system. Equals to /memory/classes/total:byte.
+# TYPE go_memstats_sys_bytes gauge
+go_memstats_sys_bytes 2.0195608e+07
+# HELP go_sched_gomaxprocs_threads The current runtime.GOMAXPROCS setting, or the number of operating system threads that can execute user-level Go code simultaneously. Sourced from /sched/gomaxprocs:threads.
+# TYPE go_sched_gomaxprocs_threads gauge
+go_sched_gomaxprocs_threads 16
+# HELP go_threads Number of OS threads created.
+# TYPE go_threads gauge
+go_threads 21
+# HELP pfcp_messages_duration_seconds The latency of the PFCP request
+# TYPE pfcp_messages_duration_seconds histogram
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2",le="1e-06"} 0
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2",le="1e-05"} 0
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2",le="0.0001"} 1
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2",le="0.001"} 1
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2",le="0.01"} 1
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2",le="0.1"} 1
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2",le="1"} 1
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2",le="10"} 1
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2",le="+Inf"} 1
+pfcp_messages_duration_seconds_sum{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2"} 6.3088e-05
+pfcp_messages_duration_seconds_count{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2"} 1
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2",le="1e-06"} 0
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2",le="1e-05"} 2439
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2",le="0.0001"} 2591
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2",le="0.001"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2",le="0.01"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2",le="0.1"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2",le="1"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2",le="10"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2",le="+Inf"} 2593
+pfcp_messages_duration_seconds_sum{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2"} 0.017177488000000022
+pfcp_messages_duration_seconds_count{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2",le="1e-06"} 0
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2",le="1e-05"} 0
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2",le="0.0001"} 0
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2",le="0.001"} 0
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2",le="0.01"} 5
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2",le="0.1"} 5
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2",le="1"} 5
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2",le="10"} 5
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2",le="+Inf"} 5
+pfcp_messages_duration_seconds_sum{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2"} 0.013591734999999999
+pfcp_messages_duration_seconds_count{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2"} 5
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2",le="1e-06"} 0
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2",le="1e-05"} 0
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2",le="0.0001"} 0
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2",le="0.001"} 23
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2",le="0.01"} 270
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2",le="0.1"} 270
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2",le="1"} 270
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2",le="10"} 270
+pfcp_messages_duration_seconds_bucket{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2",le="+Inf"} 270
+pfcp_messages_duration_seconds_sum{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2"} 0.4112780030000001
+pfcp_messages_duration_seconds_count{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2"} 270
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2",le="1e-06"} 0
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2",le="1e-05"} 0
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2",le="0.0001"} 1
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2",le="0.001"} 1
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2",le="0.01"} 1
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2",le="0.1"} 1
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2",le="1"} 1
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2",le="10"} 1
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2",le="+Inf"} 1
+pfcp_messages_duration_seconds_sum{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2"} 3.3573e-05
+pfcp_messages_duration_seconds_count{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2"} 1
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2",le="1e-06"} 0
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2",le="1e-05"} 13
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2",le="0.0001"} 2589
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2",le="0.001"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2",le="0.01"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2",le="0.1"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2",le="1"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2",le="10"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2",le="+Inf"} 2593
+pfcp_messages_duration_seconds_sum{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2"} 0.08270961499999993
+pfcp_messages_duration_seconds_count{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2"} 2593
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2",le="1e-06"} 0
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2",le="1e-05"} 0
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2",le="0.0001"} 5
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2",le="0.001"} 5
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2",le="0.01"} 5
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2",le="0.1"} 5
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2",le="1"} 5
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2",le="10"} 5
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2",le="+Inf"} 5
+pfcp_messages_duration_seconds_sum{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2"} 0.000136804
+pfcp_messages_duration_seconds_count{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2"} 5
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2",le="1e-06"} 0
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2",le="1e-05"} 44
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2",le="0.0001"} 270
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2",le="0.001"} 270
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2",le="0.01"} 270
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2",le="0.1"} 270
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2",le="1"} 270
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2",le="10"} 270
+pfcp_messages_duration_seconds_bucket{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2",le="+Inf"} 270
+pfcp_messages_duration_seconds_sum{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2"} 0.005061760999999998
+pfcp_messages_duration_seconds_count{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2"} 270
+# HELP pfcp_messages_total Counter for incoming and outgoing PFCP messages
+# TYPE pfcp_messages_total counter
+pfcp_messages_total{direction="Incoming",message_type="Association Setup Request",node_id="192.168.90.2",result="Success"} 1
+pfcp_messages_total{direction="Incoming",message_type="Heartbeat Request",node_id="192.168.90.2",result="Success"} 2593
+pfcp_messages_total{direction="Incoming",message_type="Session Establishment Request",node_id="192.168.90.2",result="Success"} 5
+pfcp_messages_total{direction="Incoming",message_type="Session Modification Request",node_id="192.168.90.2",result="Success"} 270
+pfcp_messages_total{direction="Outgoing",message_type="Association Setup Response",node_id="192.168.90.2",result="Success"} 1
+pfcp_messages_total{direction="Outgoing",message_type="Heartbeat Response",node_id="192.168.90.2",result="Success"} 2593
+pfcp_messages_total{direction="Outgoing",message_type="Session Establishment Response",node_id="192.168.90.2",result="Success"} 5
+pfcp_messages_total{direction="Outgoing",message_type="Session Modification Response",node_id="192.168.90.2",result="Success"} 270
+# HELP pfcp_sessions Number of PFCP sessions currently in the UPF
+# TYPE pfcp_sessions gauge
+pfcp_sessions{node_id="192.168.90.2"} 5
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 4.53
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 524287
+# HELP process_network_receive_bytes_total Number of bytes received by the process over the network.
+# TYPE process_network_receive_bytes_total counter
+process_network_receive_bytes_total 1.2681015368e+10
+# HELP process_network_transmit_bytes_total Number of bytes sent by the process over the network.
+# TYPE process_network_transmit_bytes_total counter
+process_network_transmit_bytes_total 1.55049926e+08
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 12
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 2.0164608e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.77860615849e+09
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 1.374806016e+09
+# HELP process_virtual_memory_max_bytes Maximum amount of virtual memory available in bytes.
+# TYPE process_virtual_memory_max_bytes gauge
+process_virtual_memory_max_bytes 1.8446744073709552e+19
+# HELP promhttp_metric_handler_requests_in_flight Current number of scrapes being served.
+# TYPE promhttp_metric_handler_requests_in_flight gauge
+promhttp_metric_handler_requests_in_flight 1
+# HELP promhttp_metric_handler_requests_total Total number of scrapes by HTTP status code.
+# TYPE promhttp_metric_handler_requests_total counter
+promhttp_metric_handler_requests_total{code="200"} 434
+promhttp_metric_handler_requests_total{code="500"} 0
+promhttp_metric_handler_requests_total{code="503"} 0
+# HELP upf_bytes_count Shows the number of bytes received by the UPF port
+# TYPE upf_bytes_count counter
+upf_bytes_count{dir="rx",iface="Access"} 2.19340249982e+11
+upf_bytes_count{dir="rx",iface="Core"} 6192
+upf_bytes_count{dir="tx",iface="Access"} 0
+upf_bytes_count{dir="tx",iface="Core"} 1.4208552094e+11
+# HELP upf_dropped_count Shows the number of packets dropped on receive by the UPF port
+# TYPE upf_dropped_count counter
+upf_dropped_count{dir="rx",iface="Access"} 759
+upf_dropped_count{dir="rx",iface="Core"} 0
+upf_dropped_count{dir="tx",iface="Access"} 0
+upf_dropped_count{dir="tx",iface="Core"} 0
+# HELP upf_jitter_ns Shows the packet processing jitter percentiles in UPF
+# TYPE upf_jitter_ns summary
+upf_jitter_ns{iface="Access",quantile="50"} 0
+upf_jitter_ns{iface="Access",quantile="75"} 0
+upf_jitter_ns{iface="Access",quantile="90"} 0
+upf_jitter_ns{iface="Access",quantile="95"} 0
+upf_jitter_ns{iface="Access",quantile="99"} 0
+upf_jitter_ns{iface="Access",quantile="99.9"} 0
+upf_jitter_ns{iface="Access",quantile="99.99"} 0
+upf_jitter_ns{iface="Access",quantile="99.999"} 0
+upf_jitter_ns{iface="Access",quantile="99.9999"} 0
+upf_jitter_ns{iface="Access",quantile="100"} 0
+upf_jitter_ns_sum{iface="Access"} 0
+upf_jitter_ns_count{iface="Access"} 0
+upf_jitter_ns{iface="Core",quantile="50"} 2000
+upf_jitter_ns{iface="Core",quantile="75"} 4600
+upf_jitter_ns{iface="Core",quantile="90"} 7500
+upf_jitter_ns{iface="Core",quantile="95"} 9500
+upf_jitter_ns{iface="Core",quantile="99"} 14000
+upf_jitter_ns{iface="Core",quantile="99.9"} 21100
+upf_jitter_ns{iface="Core",quantile="99.99"} 27500
+upf_jitter_ns{iface="Core",quantile="99.999"} 194900
+upf_jitter_ns{iface="Core",quantile="99.9999"} 233500
+upf_jitter_ns{iface="Core",quantile="100"} 233500
+upf_jitter_ns_sum{iface="Core"} 5.583618e+08
+upf_jitter_ns_count{iface="Core"} 3.809511e+06
+# HELP upf_latency_ns Shows the packet processing latency percentiles in UPF
+# TYPE upf_latency_ns summary
+upf_latency_ns{iface="Access",quantile="50"} 0
+upf_latency_ns{iface="Access",quantile="75"} 0
+upf_latency_ns{iface="Access",quantile="90"} 0
+upf_latency_ns{iface="Access",quantile="95"} 0
+upf_latency_ns{iface="Access",quantile="99"} 0
+upf_latency_ns{iface="Access",quantile="99.9"} 0
+upf_latency_ns{iface="Access",quantile="99.99"} 0
+upf_latency_ns{iface="Access",quantile="99.999"} 0
+upf_latency_ns{iface="Access",quantile="99.9999"} 0
+upf_latency_ns{iface="Access",quantile="100"} 0
+upf_latency_ns_sum{iface="Access"} 0
+upf_latency_ns_count{iface="Access"} 0
+upf_latency_ns{iface="Core",quantile="50"} 7800
+upf_latency_ns{iface="Core",quantile="75"} 10800
+upf_latency_ns{iface="Core",quantile="90"} 14000
+upf_latency_ns{iface="Core",quantile="95"} 16100
+upf_latency_ns{iface="Core",quantile="99"} 21900
+upf_latency_ns{iface="Core",quantile="99.9"} 29300
+upf_latency_ns{iface="Core",quantile="99.99"} 38200
+upf_latency_ns{iface="Core",quantile="99.999"} 239000
+upf_latency_ns{iface="Core",quantile="99.9999"} 239000
+upf_latency_ns{iface="Core",quantile="100"} 239000
+upf_latency_ns_sum{iface="Core"} 3.20630986e+10
+upf_latency_ns_count{iface="Core"} 3.809511e+06
+# HELP upf_packets_count Shows the number of packets received by the UPF port
+# TYPE upf_packets_count counter
+upf_packets_count{dir="rx",iface="Access"} 1.064758537e+09
+upf_packets_count{dir="rx",iface="Core"} 72
+upf_packets_count{dir="tx",iface="Access"} 0
+upf_packets_count{dir="tx",iface="Core"} 8.35797182e+08

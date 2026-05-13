@@ -18,4 +18,4 @@ Tool failures inferred from apply_result: 0
 - fig01_phase_b_s5_mbr_trajectory.pdf
 - fig02_phase_c_silver_mbr_trajectory.pdf
 - fig03_fallback_decomposition.pdf
-- fig04_throughput_policing_tradeoff.pdf
+- fig04_throughput_policing_efficiency_map.pdf

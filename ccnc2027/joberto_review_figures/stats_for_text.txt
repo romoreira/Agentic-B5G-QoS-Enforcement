@@ -1,0 +1,71 @@
+========================================================================
+A. Delivered throughput, mean ± 95% CI (n = runs)
+========================================================================
+
+Phase B:
+  E1 Static        562.14 ±  0.01 Mbps   (n=10)
+  E2 Threshold     507.73 ±  0.01 Mbps   (n=10)
+  E3 Greedy        562.14 ±  0.01 Mbps   (n=10)
+  E4 Agentic       531.47 ±  0.02 Mbps   (n=10)
+
+Phase C:
+  E1 Static        650.21 ±  0.02 Mbps   (n=10)
+  E2 Threshold     574.58 ±  0.02 Mbps   (n=10)
+  E3 Greedy        650.22 ±  0.02 Mbps   (n=10)
+  E4 Agentic       585.69 ±  0.05 Mbps   (n=10)
+
+========================================================================
+B. Mann-Whitney U (two-sided), E4 vs baselines
+========================================================================
+
+Phase B:
+  vs E1 Static      U =    0.0   p = 0.0001827
+  vs E2 Threshold   U =  100.0   p = 0.0001827
+  vs E3 Greedy      U =    0.0   p = 0.0001827
+
+Phase C:
+  vs E1 Static      U =    0.0   p = 0.0001827
+  vs E2 Threshold   U =  100.0   p = 0.0001827
+  vs E3 Greedy      U =    0.0   p = 0.0001827
+
+========================================================================
+C. Agentic audit logs: action × phase contingency (all runs pooled)
+========================================================================
+
+phase        A   B   C   D
+action                    
+keep        60   0   0  56
+modify_mbr   0  60  60   4
+
+  modify_mbr total (N)          : 124
+  % of modify_mbr in overload   : 96.8%
+  % keep in steady (Phase A)    : 100.0%
+
+  fallbacks per phase:
+    Phase A: 0
+    Phase B: 0
+    Phase C: 0
+    Phase D: 50
+
+========================================================================
+D. Ready-to-paste LaTeX (revised paragraph, values substituted)
+========================================================================
+
+Figures~\ref{fig:pareto_throughput_policing} and~\ref{fig:agentic_window}
+jointly test whether the agentic loop constitutes a distinct control regime.
+Two rival explanations must be ruled out: that E4 behaves as a passive
+baseline in disguise, or as a rigid threshold rule.
+Figure~\ref{fig:pareto_throughput_policing} rejects the first at the
+aggregate level: across ten runs, E4 delivers
+$531.5 \pm 0.0$~Mbps in Phase~B,
+significantly below static ($562.1 \pm 0.0$) and
+greedy ($562.1 \pm 0.0$), yet above
+threshold ($507.7 \pm 0.0$)
+(Mann--Whitney, $p \leq 0.000183$ across all pairwise tests in Phases B and~C).
+Figure~\ref{fig:agentic_window} rejects the second at the window level: of
+the $124$ \textit{modify\_mbr} actions recorded in the audit logs,
+$97\%$ fall inside overload windows, while $100\%$ of steady-state
+windows resolve to \textit{keep} --- actions follow telemetry context, not a
+fixed utilization level. The policing ratio, by contrast, separates phases
+rather than controllers, indicating that E4 changes \emph{how} overload
+demand is shaped, not \emph{how much} enforcement the datapath applies.
